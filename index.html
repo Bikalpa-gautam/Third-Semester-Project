@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Interactive 3D climate-risk training prototype for El Uvito, Medellín.">
+    <title>El Uvito Climate Risk Lab</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23102a23'/%3E%3Cpath d='M8 45 23 18l10 15 7-10 16 24H8Z' fill='%2379c795'/%3E%3Cpath d='M8 50c14-8 28 7 48-5' fill='none' stroke='%237fc9f0' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="styles.css">
+    <script src="assets/el-uvito-data.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./vendor/three.module.min.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <span class="ridge"></span>
+            <span class="water"></span>
+          </div>
+          <div>
+            <h1>El Uvito Climate Risk Lab</h1>
+            <p>Participatory 3D training prototype</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <span class="data-badge"><span></span>Official terrain + supplied GIS</span>
+          <button id="save-view" class="quiet-button" type="button">Save view</button>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <aside class="control-panel" aria-label="Scenario controls">
+          <section class="control-section first">
+            <div class="eyebrow">Pilot area</div>
+            <div class="place-row">
+              <div>
+                <strong>El Uvito</strong>
+                <span>San Cristóbal, Medellín</span>
+              </div>
+              <span class="pilot-label">Prototype 1</span>
+            </div>
+          </section>
+
+          <section class="control-section">
+            <div class="section-heading">
+              <h2>Change over time</h2>
+              <output id="year-output" for="year-2010 year-2019 year-2021">2021</output>
+            </div>
+            <div class="segmented" role="group" aria-label="Detected building-footprint year">
+              <button id="year-2010" type="button" data-year="2010" aria-pressed="false">2010</button>
+              <button id="year-2019" type="button" data-year="2019" aria-pressed="false">2019</button>
+              <button id="year-2021" type="button" data-year="2021" aria-pressed="true">2021</button>
+            </div>
+            <p class="help"><span id="building-count">241</span> detected footprint polygons inside the settlement boundary.</p>
+          </section>
+
+          <section class="control-section">
+            <div class="section-heading">
+              <h2>Weather scenario</h2>
+              <span id="scenario-label" class="scenario-label">Heavy rain</span>
+            </div>
+            <label class="range-field" for="rain-range">
+              <span><b>Rainfall emphasis</b><output id="rain-output">65%</output></span>
+              <input id="rain-range" type="range" min="0" max="100" value="65" step="5">
+            </label>
+            <label class="range-field" for="heat-range">
+              <span><b>Heat-wave view</b><output id="heat-output">31 °C</output></span>
+              <input id="heat-range" type="range" min="18" max="42" value="31" step="1">
+            </label>
+            <p class="help warning">These controls change visual emphasis. They are not calibrated predictions.</p>
+          </section>
+
+          <section class="control-section">
+            <h2>Evidence layers</h2>
+            <div class="layer-list">
+              <label><input id="layer-buildings" type="checkbox" checked><span class="legend building"></span>Detected buildings</label>
+              <label><input id="layer-mass" type="checkbox" checked><span class="legend mass"></span>Mass movement</label>
+              <label><input id="layer-flood" type="checkbox" checked><span class="legend flood"></span>Flood hazard</label>
+              <label><input id="layer-torrential" type="checkbox" checked><span class="legend torrential"></span>Torrential flow</label>
+              <label><input id="layer-riparian" type="checkbox" checked><span class="legend riparian"></span>Riparian buffers</label>
+              <label><input id="layer-river" type="checkbox" checked><span class="legend river"></span>Mapped streams</label>
+            </div>
+          </section>
+
+          <section class="control-section">
+            <div class="section-heading">
+              <h2>Place an intervention</h2>
+              <span id="intervention-count">0 placed</span>
+            </div>
+            <p class="help before-buttons">Choose one, then click the terrain.</p>
+            <div class="intervention-grid" role="group" aria-label="Intervention placement tool">
+              <button type="button" data-tool="drainage" aria-pressed="false"><span class="tool-icon drainage">≈</span>Drainage</button>
+              <button type="button" data-tool="garden" aria-pressed="false"><span class="tool-icon garden">●</span>Rain garden</button>
+              <button type="button" data-tool="trees" aria-pressed="false"><span class="tool-icon trees">▲</span>Reforestation</button>
+            </div>
+            <button id="clear-interventions" class="text-button" type="button">Clear placed interventions</button>
+          </section>
+
+          <section class="control-section model-note">
+            <h2>Model boundary</h2>
+            <p>Terrain and horizontal locations are georeferenced. Building heights and intervention effects are schematic.</p>
+          </section>
+        </aside>
+
+        <main class="model-area">
+          <div class="model-toolbar">
+            <div>
+              <strong id="view-title">El Uvito · 2021 building layer</strong>
+              <span id="view-subtitle">2024 orthophoto over official 1 m DEM</span>
+            </div>
+            <div class="view-buttons">
+              <button id="top-view" class="quiet-button" type="button">Top view</button>
+              <button id="reset-view" class="quiet-button" type="button">Reset camera</button>
+            </div>
+          </div>
+
+          <div id="scene-wrap" class="scene-wrap" aria-label="Interactive three-dimensional model of El Uvito">
+            <canvas id="scene-canvas"></canvas>
+            <div id="heat-tint" class="heat-tint" aria-hidden="true"></div>
+            <div id="loading" class="loading" role="status">
+              <span></span>
+              Loading real terrain…
+            </div>
+            <div class="scene-key">
+              <span><i></i>Drag to rotate</span>
+              <span><i></i>Scroll to zoom</span>
+              <span><i></i>Right-drag to move</span>
+            </div>
+            <div id="placement-tip" class="placement-tip" hidden>Click the terrain to place an intervention</div>
+            <div class="north-arrow" aria-label="North is toward the top-left of the initial oblique view">
+              <span>N</span>
+              <i></i>
+            </div>
+          </div>
+
+          <div class="interpretation-strip" aria-live="polite">
+            <div>
+              <span class="strip-label">What you are seeing</span>
+              <strong id="interpretation">Heavy rain makes existing mapped hazard boundaries more prominent.</strong>
+            </div>
+            <div>
+              <span class="strip-label">Training question</span>
+              <strong id="training-question">Which access area or building cluster should be discussed first?</strong>
+            </div>
+            <div>
+              <span class="strip-label">Evidence status</span>
+              <strong>Scenario visualization, not a forecast</strong>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <footer>
+        <span>Terrain and imagery: Alcaldía de Medellín ImageServer, 2024.</span>
+        <span>Buildings and risk layers: supplied project GIS package.</span>
+        <button id="open-notes" type="button">Data notes</button>
+      </footer>
+    </div>
+
+    <dialog id="notes-dialog">
+      <form method="dialog">
+        <div class="dialog-heading">
+          <div>
+            <span class="eyebrow">Read before presenting</span>
+            <h2>What this prototype can and cannot claim</h2>
+          </div>
+          <button class="dialog-close" aria-label="Close data notes" value="close">×</button>
+        </div>
+        <dl>
+          <div><dt>Terrain</dt><dd id="terrain-note"></dd></div>
+          <div><dt>Orthophoto</dt><dd id="imagery-note"></dd></div>
+          <div><dt>Buildings</dt><dd id="buildings-note"></dd></div>
+          <div><dt>Hazards</dt><dd id="hazards-note"></dd></div>
+        </dl>
+        <p class="privacy-note">No respondent names or household survey coordinates are included in this public prototype.</p>
+      </form>
+    </dialog>
+
+    <noscript>This prototype requires JavaScript to display the 3D model.</noscript>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
