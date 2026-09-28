@@ -278,7 +278,7 @@ function renderInspector() {
           .join("")
       : `<span>${t("noHazard")}</span>`;
     $("inspect-content").innerHTML =
-      `<div class="inspect-values"><div><small>${t("elevation")}</small><strong>${fmt(p.elevation)}<em>m</em></strong></div><div><small>${t("slope")}</small><strong>${fmt(p.slope, 1)}<em>°</em></strong></div></div><div class="inspect-hazards">${hazards}</div><div class="inspect-coords">EPSG:9377 · E ${fmt(p.easting, 1)} · N ${fmt(p.northing, 1)}<br>${t("measuredGrid")}</div>`;
+      `<div class="inspect-values"><div><small>${t("elevation")}</small><strong>${fmt(p.elevation)}<em>m</em></strong></div><div><small>${t("slope")}</small><strong>${fmt(p.slope, 1)}<em>°</em></strong></div></div><div class="inspect-hazards">${hazards}</div><div class="inspect-coords">EPSG:9377 · E ${fmt(p.easting, 1)} · N ${fmt(p.northing, 1)}</div>`;
   } else if (s.kind === "measure") {
     if (state.measurePoints.length !== 2) return;
     const result = measurePoints(...state.measurePoints, model);
