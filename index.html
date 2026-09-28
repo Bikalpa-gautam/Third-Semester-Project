@@ -1,189 +1,776 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Interactive 3D climate-risk training prototype for El Uvito, Medellín.">
-    <title>El Uvito Climate Risk Lab</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23102a23'/%3E%3Cpath d='M8 45 23 18l10 15 7-10 16 24H8Z' fill='%2379c795'/%3E%3Cpath d='M8 50c14-8 28 7 48-5' fill='none' stroke='%237fc9f0' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css">
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f8f9f6" />
+    <meta
+      name="description"
+      content="Explore the terrain, water systems and changing settlement of El Uvito, Medellín. An interactive landscape for learning and planning."
+    />
+    <title>El Uvito</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
     <script src="assets/el-uvito-data.js"></script>
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "./vendor/three.module.min.js"
-        }
-      }
-    </script>
   </head>
   <body>
-    <div class="app-shell">
-      <header class="topbar">
-        <div class="brand">
-          <div class="brand-mark" aria-hidden="true">
-            <span class="ridge"></span>
-            <span class="water"></span>
-          </div>
-          <div>
-            <h1>El Uvito Climate Risk Lab</h1>
-            <p>Participatory 3D training prototype</p>
-          </div>
-        </div>
-        <div class="header-actions">
-          <span class="data-badge"><span></span>Official terrain + supplied GIS</span>
-          <button id="save-view" class="quiet-button" type="button">Save view</button>
-        </div>
-      </header>
-
-      <div class="workspace">
-        <aside class="control-panel" aria-label="Scenario controls">
-          <section class="control-section first">
-            <div class="eyebrow">Pilot area</div>
-            <div class="place-row">
-              <div>
-                <strong>El Uvito</strong>
-                <span>San Cristóbal, Medellín</span>
-              </div>
-              <span class="pilot-label">Prototype 1</span>
-            </div>
-          </section>
-
-          <section class="control-section">
-            <div class="section-heading">
-              <h2>Change over time</h2>
-              <output id="year-output" for="year-2010 year-2019 year-2021">2021</output>
-            </div>
-            <div class="segmented" role="group" aria-label="Detected building-footprint year">
-              <button id="year-2010" type="button" data-year="2010" aria-pressed="false">2010</button>
-              <button id="year-2019" type="button" data-year="2019" aria-pressed="false">2019</button>
-              <button id="year-2021" type="button" data-year="2021" aria-pressed="true">2021</button>
-            </div>
-            <p class="help"><span id="building-count">241</span> detected footprint polygons inside the settlement boundary.</p>
-          </section>
-
-          <section class="control-section">
-            <div class="section-heading">
-              <h2>Weather scenario</h2>
-              <span id="scenario-label" class="scenario-label">Heavy rain</span>
-            </div>
-            <label class="range-field" for="rain-range">
-              <span><b>Rainfall emphasis</b><output id="rain-output">65%</output></span>
-              <input id="rain-range" type="range" min="0" max="100" value="65" step="5">
-            </label>
-            <label class="range-field" for="heat-range">
-              <span><b>Heat-wave view</b><output id="heat-output">31 °C</output></span>
-              <input id="heat-range" type="range" min="18" max="42" value="31" step="1">
-            </label>
-            <p class="help warning">These controls change visual emphasis. They are not calibrated predictions.</p>
-          </section>
-
-          <section class="control-section">
-            <h2>Evidence layers</h2>
-            <div class="layer-list">
-              <label><input id="layer-buildings" type="checkbox" checked><span class="legend building"></span>Detected buildings</label>
-              <label><input id="layer-mass" type="checkbox" checked><span class="legend mass"></span>Mass movement</label>
-              <label><input id="layer-flood" type="checkbox" checked><span class="legend flood"></span>Flood hazard</label>
-              <label><input id="layer-torrential" type="checkbox" checked><span class="legend torrential"></span>Torrential flow</label>
-              <label><input id="layer-riparian" type="checkbox" checked><span class="legend riparian"></span>Riparian buffers</label>
-              <label><input id="layer-river" type="checkbox" checked><span class="legend river"></span>Mapped streams</label>
-            </div>
-          </section>
-
-          <section class="control-section">
-            <div class="section-heading">
-              <h2>Place an intervention</h2>
-              <span id="intervention-count">0 placed</span>
-            </div>
-            <p class="help before-buttons">Choose one, then click the terrain.</p>
-            <div class="intervention-grid" role="group" aria-label="Intervention placement tool">
-              <button type="button" data-tool="drainage" aria-pressed="false"><span class="tool-icon drainage">≈</span>Drainage</button>
-              <button type="button" data-tool="garden" aria-pressed="false"><span class="tool-icon garden">●</span>Rain garden</button>
-              <button type="button" data-tool="trees" aria-pressed="false"><span class="tool-icon trees">▲</span>Reforestation</button>
-            </div>
-            <button id="clear-interventions" class="text-button" type="button">Clear placed interventions</button>
-          </section>
-
-          <section class="control-section model-note">
-            <h2>Model boundary</h2>
-            <p>Terrain and horizontal locations are georeferenced. Building heights and intervention effects are schematic.</p>
-          </section>
-        </aside>
-
-        <main class="model-area">
-          <div class="model-toolbar">
-            <div>
-              <strong id="view-title">El Uvito · 2021 building layer</strong>
-              <span id="view-subtitle">2024 orthophoto over official 1 m DEM</span>
-            </div>
-            <div class="view-buttons">
-              <button id="top-view" class="quiet-button" type="button">Top view</button>
-              <button id="reset-view" class="quiet-button" type="button">Reset camera</button>
-            </div>
-          </div>
-
-          <div id="scene-wrap" class="scene-wrap" aria-label="Interactive three-dimensional model of El Uvito">
-            <canvas id="scene-canvas"></canvas>
-            <div id="heat-tint" class="heat-tint" aria-hidden="true"></div>
-            <div id="loading" class="loading" role="status">
-              <span></span>
-              Loading real terrain…
-            </div>
-            <div class="scene-key">
-              <span><i></i>Drag to rotate</span>
-              <span><i></i>Scroll to zoom</span>
-              <span><i></i>Right-drag to move</span>
-            </div>
-            <div id="placement-tip" class="placement-tip" hidden>Click the terrain to place an intervention</div>
-            <div class="north-arrow" aria-label="North is toward the top-left of the initial oblique view">
-              <span>N</span>
-              <i></i>
-            </div>
-          </div>
-
-          <div class="interpretation-strip" aria-live="polite">
-            <div>
-              <span class="strip-label">What you are seeing</span>
-              <strong id="interpretation">Heavy rain makes existing mapped hazard boundaries more prominent.</strong>
-            </div>
-            <div>
-              <span class="strip-label">Training question</span>
-              <strong id="training-question">Which access area or building cluster should be discussed first?</strong>
-            </div>
-            <div>
-              <span class="strip-label">Evidence status</span>
-              <strong>Scenario visualization, not a forecast</strong>
-            </div>
-          </div>
-        </main>
+    <svg
+      class="icon-library"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <symbol id="i-layers" viewBox="0 0 24 24">
+        <path d="m3 8 9-5 9 5-9 5-9-5Zm0 5 9 5 9-5M3 18l9 5 9-5" />
+      </symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4" />
+        <path
+          d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"
+        />
+      </symbol>
+      <symbol id="i-pin" viewBox="0 0 24 24">
+        <path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 0 1 14 0Z" />
+        <circle cx="12" cy="10" r="2.5" />
+      </symbol>
+      <symbol id="i-close" viewBox="0 0 24 24">
+        <path d="m6 6 12 12M6 18 18 6" />
+      </symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" />
+      </symbol>
+      <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14" /></symbol>
+      <symbol id="i-home" viewBox="0 0 24 24">
+        <path d="M3 11 12 3l9 8M5 10v11h14V10M9 21v-8h6v8" />
+      </symbol>
+      <symbol id="i-ruler" viewBox="0 0 24 24">
+        <path d="m3 16 13-13 5 5L8 21Zm5-5 2 2m2-6 2 2m2-6 2 2M4 15l2 2" />
+      </symbol>
+      <symbol id="i-expand" viewBox="0 0 24 24">
+        <path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" />
+      </symbol>
+      <symbol id="i-camera" viewBox="0 0 24 24">
+        <path d="M3 7h4l2-3h6l2 3h4v14H3Z" />
+        <circle cx="12" cy="13" r="4" />
+      </symbol>
+      <symbol id="i-share" viewBox="0 0 24 24">
+        <path
+          d="m10 13 4-4m-7 2-2 2a4 4 0 0 0 6 6l2-2m-2-10 2-2a4 4 0 0 1 6 6l-2 2"
+        />
+      </symbol>
+      <symbol id="i-info" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 11v6m0-10v.1" />
+      </symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24">
+        <path d="m9 5 7 7-7 7" />
+      </symbol>
+      <symbol id="i-panel" viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <path d="M9 4v16" />
+      </symbol>
+      <symbol id="i-water" viewBox="0 0 24 24">
+        <path
+          d="M3 6c3-3 6 3 9 0s6 3 9 0M3 12c3-3 6 3 9 0s6 3 9 0M3 18c3-3 6 3 9 0s6 3 9 0"
+        />
+      </symbol>
+      <symbol id="i-leaf" viewBox="0 0 24 24">
+        <path d="M20 3c-1 10-3 16-10 16S2 9 8 7c4-1 7 0 12-4ZM4 21 15 10" />
+      </symbol>
+      <symbol id="i-tree" viewBox="0 0 24 24">
+        <path d="m12 2 6 8h-3l6 8H3l6-8H6Zm0 16v4" />
+      </symbol>
+      <symbol id="i-undo" viewBox="0 0 24 24">
+        <path d="M8 4 3 9l5 5M3 9h11a6 6 0 0 1 0 12" />
+      </symbol>
+      <symbol id="i-redo" viewBox="0 0 24 24">
+        <path d="m16 4 5 5-5 5m5-5H10a6 6 0 0 0 0 12" />
+      </symbol>
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5" />
+      </symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24">
+        <path d="M12 15V3m-5 5 5-5 5 5M4 16v5h16v-5" />
+      </symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24">
+        <path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7" />
+      </symbol>
+      <symbol id="i-orbit" viewBox="0 0 24 24">
+        <ellipse cx="12" cy="12" rx="10" ry="5" transform="rotate(-30 12 12)" />
+        <circle cx="12" cy="12" r="2" />
+      </symbol>
+      <symbol id="i-rain" viewBox="0 0 24 24">
+        <path
+          d="M5 14a4 4 0 0 1-1-8 6 6 0 0 1 11-1 4.5 4.5 0 0 1 4 9M7 17l-1 4m6-4-1 4m6-4-1 4"
+        />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="m5 12 4 4L19 6" />
+      </symbol>
+    </svg>
+    <a class="skip-link" href="#map-tools" data-i18n="skip"
+      >Skip to map controls</a
+    >
+    <header class="topbar">
+      <div class="identity">
+        <svg
+          class="brand-mark"
+          viewBox="0 0 40 40"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M4 28c7 0 4-16 14-16s7 16 18 16M4 33c12 0 7-15 14-15s6 15 18 15M7 21C12 8 15 6 20 6s9 5 13 15"
+            stroke="currentColor"
+            stroke-width="1.65"
+            stroke-linecap="round"
+          />
+        </svg>
+        <h1>El Uvito</h1>
+        <span class="brand-divider"></span
+        ><span class="location">Medellín, Colombia</span>
       </div>
-
-      <footer>
-        <span>Terrain and imagery: Alcaldía de Medellín ImageServer, 2024.</span>
-        <span>Buildings and risk layers: supplied project GIS package.</span>
-        <button id="open-notes" type="button">Data notes</button>
-      </footer>
-    </div>
-
-    <dialog id="notes-dialog">
-      <form method="dialog">
-        <div class="dialog-heading">
-          <div>
-            <span class="eyebrow">Read before presenting</span>
-            <h2>What this prototype can and cannot claim</h2>
-          </div>
-          <button class="dialog-close" aria-label="Close data notes" value="close">×</button>
+      <div class="header-actions">
+        <button class="text-button" id="open-about" data-i18n="about">
+          About
+        </button>
+        <button
+          class="icon-button"
+          id="share-view"
+          data-title="share"
+          aria-label="Copy view link"
+          title="Copy view link"
+        >
+          <svg><use href="#i-share" /></svg>
+        </button>
+        <button class="export-button" id="save-view">
+          <svg><use href="#i-camera" /></svg
+          ><span data-i18n="capture">Capture view</span>
+        </button>
+        <button
+          class="language-button"
+          id="language"
+          aria-label="Cambiar a español"
+          lang="es"
+        >
+          ES
+        </button>
+      </div>
+    </header>
+    <div class="workspace" id="workspace">
+      <aside class="sidebar" id="sidebar" aria-label="Map settings">
+        <nav class="panel-tabs" role="tablist" aria-label="Workspace">
+          <button
+            type="button"
+            id="tab-explore"
+            role="tab"
+            aria-selected="true"
+            aria-controls="panel-explore"
+            data-tab="explore"
+          >
+            <svg><use href="#i-layers" /></svg
+            ><span data-i18n="explore">Explore</span>
+          </button>
+          <button
+            type="button"
+            id="tab-scenarios"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-scenarios"
+            tabindex="-1"
+            data-tab="scenarios"
+          >
+            <svg><use href="#i-sun" /></svg
+            ><span data-i18n="scenarios">Scenarios</span>
+          </button>
+          <button
+            type="button"
+            id="tab-plan"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-plan"
+            tabindex="-1"
+            data-tab="plan"
+          >
+            <svg><use href="#i-pin" /></svg><span data-i18n="plan">Plan</span
+            ><span class="tab-count" id="plan-count" hidden>0</span>
+          </button>
+        </nav>
+        <div class="panel-body">
+          <section
+            role="tabpanel"
+            id="panel-explore"
+            aria-labelledby="tab-explore"
+          >
+            <div class="panel-heading">
+              <span class="overline" data-i18n="landscape">THE LANDSCAPE</span>
+              <h2 data-i18n="layers">Map layers</h2>
+              <p data-i18n="exploreIntro">
+                A closer look at the settlement and its surroundings.
+              </p>
+            </div>
+            <section class="settings-section">
+              <div class="section-label">
+                <h3 data-i18n="footprints">Building footprints</h3>
+                <span id="building-count" class="count">241</span>
+              </div>
+              <div
+                class="segmented year-switch"
+                role="group"
+                aria-label="Building footprint year"
+              >
+                <button data-year="2010" aria-pressed="false">2010</button
+                ><button data-year="2019" aria-pressed="false">2019</button
+                ><button data-year="2021" aria-pressed="true">2021</button>
+              </div>
+              <div class="year-caption">
+                <span data-i18n="detected">Detected polygons</span
+                ><span id="year-caption">2021</span>
+              </div>
+            </section>
+            <section class="settings-section layer-section">
+              <h3 data-i18n="settlement">Settlement & water</h3>
+              <div id="context-layers"></div>
+            </section>
+            <section class="settings-section layer-section">
+              <div class="section-label">
+                <h3 data-i18n="hazards">Mapped hazards</h3>
+                <span class="source-year">POT 2014</span>
+              </div>
+              <div id="hazard-layers"></div>
+              <label class="range-label compact" for="layer-opacity"
+                ><span data-i18n="opacity">Layer opacity</span
+                ><output id="opacity-value">65%</output></label
+              ><input
+                type="range"
+                id="layer-opacity"
+                min="15"
+                max="100"
+                step="5"
+                value="65"
+              />
+            </section>
+            <details class="settings-section terrain-settings">
+              <summary>
+                <span data-i18n="terrainSettings">Terrain settings</span
+                ><svg><use href="#i-chevron" /></svg>
+              </summary>
+              <div id="terrain-layers"></div>
+              <div id="relief-setting">
+                <label class="range-label" for="relief-range"
+                  ><span data-i18n="relief">Vertical scale</span
+                  ><output id="relief-value">1×</output></label
+                ><input
+                  type="range"
+                  id="relief-range"
+                  min="1"
+                  max="2"
+                  step="0.1"
+                  value="1"
+                />
+              </div>
+            </details>
+          </section>
+          <section
+            role="tabpanel"
+            id="panel-scenarios"
+            aria-labelledby="tab-scenarios"
+            hidden
+          >
+            <div class="panel-heading">
+              <span class="overline" data-i18n="conditions"
+                >VISUAL CONDITIONS</span
+              >
+              <h2 data-i18n="scenarios">Scenarios</h2>
+              <p data-i18n="scenarioIntro">Set the scene for a discussion.</p>
+            </div>
+            <div
+              class="scenario-presets"
+              role="group"
+              aria-label="Visual scenario"
+            >
+              <button data-preset="clear" aria-pressed="true">
+                <svg><use href="#i-sun" /></svg
+                ><span data-i18n="clear">Clear</span></button
+              ><button data-preset="rain" aria-pressed="false">
+                <svg><use href="#i-rain" /></svg
+                ><span data-i18n="rain">Rain</span></button
+              ><button data-preset="warm" aria-pressed="false">
+                <svg><use href="#i-sun" /></svg
+                ><span data-i18n="warm">Warm</span>
+              </button>
+            </div>
+            <section class="settings-section">
+              <label class="range-label" for="rain-range"
+                ><span data-i18n="rainEffect">Rain effect</span
+                ><output id="rain-value">0%</output></label
+              ><input
+                id="rain-range"
+                type="range"
+                min="0"
+                max="100"
+                value="0"
+                step="5"
+              /><label class="range-label" for="warmth-range"
+                ><span data-i18n="warmth">Warmth</span
+                ><output id="warmth-value">0%</output></label
+              ><input
+                id="warmth-range"
+                type="range"
+                min="0"
+                max="100"
+                value="0"
+                step="5"
+              />
+            </section>
+            <p class="small-note" data-i18n="scenarioNote">
+              Visual effects only. Mapped hazard boundaries stay fixed.
+            </p>
+            <button
+              id="reset-scenario"
+              class="secondary-button wide"
+              data-i18n="resetScenario"
+            >
+              Reset conditions
+            </button>
+          </section>
+          <section
+            role="tabpanel"
+            id="panel-plan"
+            aria-labelledby="tab-plan"
+            hidden
+          >
+            <div class="panel-heading">
+              <span class="overline" data-i18n="possibilities"
+                >ON THE GROUND</span
+              >
+              <h2 data-i18n="proposals">Proposals</h2>
+              <p data-i18n="planIntro">
+                Choose a proposal, then place it on the terrain.
+              </p>
+            </div>
+            <div
+              class="proposal-tools"
+              id="proposal-tools"
+              role="group"
+              aria-label="Proposal type"
+            ></div>
+            <p class="small-note" data-i18n="planNote">
+              Proposed locations for discussion. Effects are not calculated.
+            </p>
+            <div class="section-label plan-heading">
+              <h3 data-i18n="yourPlan">Your plan</h3>
+              <div class="history-buttons">
+                <button
+                  id="undo"
+                  class="icon-button small"
+                  data-title="undo"
+                  title="Undo"
+                  aria-label="Undo"
+                  disabled
+                >
+                  <svg><use href="#i-undo" /></svg></button
+                ><button
+                  id="redo"
+                  class="icon-button small"
+                  data-title="redo"
+                  title="Redo"
+                  aria-label="Redo"
+                  disabled
+                >
+                  <svg><use href="#i-redo" /></svg>
+                </button>
+              </div>
+            </div>
+            <div id="proposal-list"></div>
+            <p class="local-save" id="save-status" data-i18n="localSave">
+              Saved on this device
+            </p>
+            <div class="plan-actions">
+              <button id="export-plan" class="secondary-button">
+                <svg><use href="#i-download" /></svg
+                ><span data-i18n="exportPlan">Export</span></button
+              ><button id="import-plan" class="secondary-button">
+                <svg><use href="#i-upload" /></svg
+                ><span data-i18n="importPlan">Import</span>
+              </button>
+            </div>
+            <input
+              id="plan-file"
+              type="file"
+              accept="application/json,.json"
+              hidden
+            />
+          </section>
         </div>
-        <dl>
-          <div><dt>Terrain</dt><dd id="terrain-note"></dd></div>
-          <div><dt>Orthophoto</dt><dd id="imagery-note"></dd></div>
-          <div><dt>Buildings</dt><dd id="buildings-note"></dd></div>
-          <div><dt>Hazards</dt><dd id="hazards-note"></dd></div>
-        </dl>
-        <p class="privacy-note">No respondent names or household survey coordinates are included in this public prototype.</p>
-      </form>
+        <div class="sidebar-footer">
+          <span>La Iguaná · San Cristóbal</span
+          ><button id="open-sources" class="text-button" data-i18n="sources">
+            Sources
+          </button>
+        </div>
+      </aside>
+      <main
+        class="map-stage"
+        id="scene-wrap"
+        aria-label="Interactive model of El Uvito"
+      >
+        <canvas
+          id="terrain-canvas"
+          tabindex="0"
+          aria-label="3D terrain. Use arrow keys to move, plus and minus to zoom. Click to inspect a point."
+        ></canvas>
+        <canvas
+          id="map-canvas"
+          tabindex="0"
+          aria-label="Map. Use arrow keys to move, plus and minus to zoom. Click to inspect a point."
+          hidden
+        ></canvas>
+        <div class="map-topbar" id="map-tools">
+          <div class="view-group">
+            <button
+              id="toggle-panel"
+              class="icon-button surface"
+              data-title="togglePanel"
+              aria-label="Toggle side panel"
+              title="Toggle side panel"
+              aria-expanded="true"
+              aria-controls="sidebar"
+            >
+              <svg><use href="#i-panel" /></svg>
+            </button>
+            <div
+              class="segmented view-switch surface"
+              role="group"
+              aria-label="View"
+            >
+              <button data-mode="3d" aria-pressed="true">3D</button
+              ><button data-mode="map" aria-pressed="false" data-i18n="map">
+                Map
+              </button>
+            </div>
+          </div>
+          <div
+            class="segmented basemap-switch surface"
+            role="group"
+            aria-label="Terrain style"
+          >
+            <button data-base="aerial" aria-pressed="true" data-i18n="aerial">
+              Aerial</button
+            ><button
+              data-base="elevation"
+              aria-pressed="false"
+              data-i18n="elevation"
+            >
+              Elevation</button
+            ><button data-base="slope" aria-pressed="false" data-i18n="slope">
+              Slope
+            </button>
+          </div>
+        </div>
+        <div class="navigation-tools">
+          <button
+            id="north"
+            class="compass surface"
+            title="Face north"
+            aria-label="Face north"
+          >
+            <span>N</span
+            ><svg id="compass-needle" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m12 3 6 17-6-4-6 4Z" />
+            </svg>
+          </button>
+          <div class="tool-stack surface">
+            <button
+              id="zoom-in"
+              class="icon-button"
+              data-title="zoomIn"
+              title="Zoom in"
+              aria-label="Zoom in"
+            >
+              <svg><use href="#i-plus" /></svg></button
+            ><button
+              id="zoom-out"
+              class="icon-button"
+              data-title="zoomOut"
+              title="Zoom out"
+              aria-label="Zoom out"
+            >
+              <svg><use href="#i-minus" /></svg></button
+            ><span></span
+            ><button
+              id="reset-view"
+              class="icon-button"
+              data-title="resetView"
+              title="Reset view"
+              aria-label="Reset view"
+            >
+              <svg><use href="#i-home" /></svg>
+            </button>
+          </div>
+          <div class="tool-stack surface">
+            <button
+              id="measure"
+              class="icon-button"
+              data-title="measure"
+              aria-label="Measure distance"
+              title="Measure distance"
+              aria-pressed="false"
+            >
+              <svg><use href="#i-ruler" /></svg></button
+            ><button
+              id="orbit"
+              class="icon-button"
+              data-title="orbit"
+              aria-label="Rotate view"
+              title="Rotate view"
+              aria-pressed="false"
+            >
+              <svg><use href="#i-orbit" /></svg></button
+            ><button
+              id="fullscreen"
+              class="icon-button"
+              data-title="fullscreen"
+              aria-label="Full screen"
+              title="Full screen"
+            >
+              <svg><use href="#i-expand" /></svg>
+            </button>
+          </div>
+        </div>
+        <div class="loading" id="loading" role="status">
+          <div class="loading-contour"></div>
+          <span data-i18n="loading">Opening El Uvito…</span>
+        </div>
+        <div id="action-hint" class="action-hint surface" hidden>
+          <span id="action-hint-text"></span
+          ><button
+            id="cancel-tool"
+            class="icon-button small"
+            data-title="cancel"
+            aria-label="Cancel"
+            title="Cancel"
+          >
+            <svg><use href="#i-close" /></svg>
+          </button>
+        </div>
+        <section
+          id="inspector"
+          class="inspector surface"
+          aria-label="Selected point"
+          hidden
+        >
+          <div class="inspector-heading">
+            <div>
+              <span class="overline" id="inspect-eyebrow"></span>
+              <h3 id="inspect-title"></h3>
+            </div>
+            <button
+              id="close-inspector"
+              class="icon-button small"
+              data-title="close"
+              aria-label="Close"
+              title="Close"
+            >
+              <svg><use href="#i-close" /></svg>
+            </button>
+          </div>
+          <div id="inspect-content"></div>
+        </section>
+        <div class="map-bottom">
+          <div class="map-meta">
+            <div id="legend" class="map-legend surface"></div>
+            <div id="scale" class="map-scale">
+              <span id="scale-label">500 m</span>
+              <div id="scale-line"></div>
+            </div>
+          </div>
+          <div class="bottom-right">
+            <span id="cursor-position" class="cursor-position"></span
+            ><button
+              id="help"
+              class="help-button surface"
+              aria-label="Navigation help"
+              title="Navigation help"
+            >
+              ?
+            </button>
+          </div>
+        </div>
+        <div class="attribution">
+          © Medellín 2024 <span>·</span>
+          <span data-i18n="imagery">Imagery & terrain</span>
+        </div>
+      </main>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    <dialog id="about-dialog">
+      <div class="dialog-top">
+        <span class="overline" data-i18n="aboutProject">ABOUT THE PROJECT</span
+        ><button
+          class="icon-button"
+          data-close="about-dialog"
+          data-title="close"
+          aria-label="Close"
+          title="Close"
+        >
+          <svg><use href="#i-close" /></svg>
+        </button>
+      </div>
+      <h2>El Uvito</h2>
+      <p class="dialog-lead" data-i18n="aboutLead">
+        A landscape to explore, understand and discuss.
+      </p>
+      <p data-i18n="aboutBody">
+        An interactive model of El Uvito in San Cristóbal, Medellín, developed
+        for climate-risk learning and participatory planning.
+      </p>
+      <div class="project-credit">
+        <span data-i18n="semester">Semester project · ETH Zürich</span
+        ><strong>Bikalpa Gautam</strong
+        ><span
+          ><span data-i18n="supervisor">Supervisor</span>: Ricardo
+          Pérez-Restrepo</span
+        >
+      </div>
+      <button
+        class="secondary-button wide"
+        id="about-sources"
+        data-i18n="viewSources"
+      >
+        View data sources
+      </button>
     </dialog>
-
-    <noscript>This prototype requires JavaScript to display the 3D model.</noscript>
+    <dialog id="sources-dialog">
+      <div class="dialog-top">
+        <span class="overline" data-i18n="reference">REFERENCE</span
+        ><button
+          class="icon-button"
+          data-close="sources-dialog"
+          data-title="close"
+          aria-label="Close"
+          title="Close"
+        >
+          <svg><use href="#i-close" /></svg>
+        </button>
+      </div>
+      <h2 data-i18n="dataSources">Data sources</h2>
+      <dl class="source-list">
+        <div>
+          <dt data-i18n="terrain">Terrain</dt>
+          <dd data-i18n="terrainSource">
+            Medellín 2024 DEM. Native resolution: 1 m. This view uses a 320 ×
+            177 grid (approximately 9.1 m spacing).
+          </dd>
+        </div>
+        <div>
+          <dt data-i18n="aerial">Aerial</dt>
+          <dd data-i18n="aerialSource">
+            Medellín 2024 orthophoto. Native resolution: 0.08 m; displayed at
+            1600 × 885 pixels.
+          </dd>
+        </div>
+        <div>
+          <dt data-i18n="footprints">Building footprints</dt>
+          <dd data-i18n="buildingSource">
+            Supplied Cuenca Alta detections from 2010, 2019 and 2021. Polygons
+            are not a household count. Displayed heights are schematic (6 m).
+          </dd>
+        </div>
+        <div>
+          <dt data-i18n="hazards">Mapped hazards</dt>
+          <dd data-i18n="hazardSource">
+            Supplied POT 2014 mass-movement, flood and torrential-flow polygons.
+            These are historical mapped categories, not a current risk
+            assessment.
+          </dd>
+        </div>
+        <div>
+          <dt data-i18n="terrainAnalysis">Terrain analysis</dt>
+          <dd data-i18n="analysisSource">
+            Slope and 50 m contours are derived from the displayed elevation
+            grid. Point measurements are approximate; coordinates use EPSG:9377.
+          </dd>
+        </div>
+        <div>
+          <dt data-i18n="scenarios">Scenarios</dt>
+          <dd data-i18n="scenarioSource">
+            Rain and warmth are visual effects without physical units. No flood
+            depth, temperature, landslide probability or intervention benefit is
+            simulated.
+          </dd>
+        </div>
+      </dl>
+      <a
+        class="source-link"
+        href="https://www.medellin.gov.co/servidormapas/rest/services/ServiciosImagen"
+        target="_blank"
+        rel="noopener noreferrer"
+        data-i18n="municipalSource"
+        >Medellín image services ↗</a
+      >
+    </dialog>
+    <dialog id="help-dialog">
+      <div class="dialog-top">
+        <span class="overline" data-i18n="navigation">NAVIGATION</span
+        ><button
+          class="icon-button"
+          data-close="help-dialog"
+          data-title="close"
+          aria-label="Close"
+          title="Close"
+        >
+          <svg><use href="#i-close" /></svg>
+        </button>
+      </div>
+      <h2 data-i18n="lookAround">Look around</h2>
+      <dl class="source-list">
+        <div>
+          <dt data-i18n="rotate">Rotate</dt>
+          <dd data-i18n="rotateHelp">
+            Drag in 3D. Use two fingers to pan on a touch screen.
+          </dd>
+        </div>
+        <div>
+          <dt data-i18n="move">Move</dt>
+          <dd data-i18n="moveHelp">
+            Right-drag or use the arrow keys. In Map view, drag to pan.
+          </dd>
+        </div>
+        <div>
+          <dt data-i18n="zoom">Zoom</dt>
+          <dd data-i18n="zoomHelp">
+            Scroll, pinch, or use the + and − buttons.
+          </dd>
+        </div>
+        <div>
+          <dt data-i18n="inspect">Inspect</dt>
+          <dd data-i18n="inspectHelp">
+            Click the terrain for elevation, slope and mapped hazard categories.
+          </dd>
+        </div>
+        <div>
+          <dt data-i18n="measure">Measure distance</dt>
+          <dd data-i18n="measureHelp">
+            Select the ruler, then two points. Distance is horizontal, not
+            walking distance.
+          </dd>
+        </div>
+        <div>
+          <dt data-i18n="cancel">Cancel</dt>
+          <dd data-i18n="cancelHelp">
+            Press Escape to leave a tool or close a selection.
+          </dd>
+        </div>
+      </dl>
+    </dialog>
+    <noscript
+      ><div class="no-script">
+        Enable JavaScript to explore El Uvito.
+      </div></noscript
+    >
     <script type="module" src="app.js"></script>
   </body>
 </html>

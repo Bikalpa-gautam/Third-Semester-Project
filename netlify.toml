@@ -1,5 +1,9 @@
 [build]
+  command = "npm run check && npm test"
   publish = "."
+
+[build.environment]
+  NODE_VERSION = "22"
 
 [[headers]]
   for = "/*"
