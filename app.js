@@ -437,8 +437,12 @@ function download(blob, name) {
     a = document.createElement("a");
   a.href = url;
   a.download = name;
+  a.hidden = true;
+  document.body.append(a);
   a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  a.remove();
+  // Let slower browsers finish receiving the file before releasing its URL.
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 function exportPlan() {
   if (!state.proposals.length) {
@@ -594,6 +598,7 @@ $("language").addEventListener("click", () => {
 });
 for (const [button, dialog] of [
   ["open-about", "about-dialog"],
+  ["mobile-about", "about-dialog"],
   ["open-sources", "sources-dialog"],
   ["help", "help-dialog"],
 ])

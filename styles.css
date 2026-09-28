@@ -499,6 +499,14 @@ input[type="range"]:focus-visible {
   font-size: 10px;
   padding: 0;
 }
+.footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+#mobile-about {
+  display: none;
+}
 .map-stage {
   position: relative;
   min-width: 0;
@@ -1285,7 +1293,10 @@ dialog p:not(.dialog-lead) {
     padding: 16px 0;
   }
   .sidebar-footer {
-    display: none;
+    padding: 10px 24px;
+  }
+  #mobile-about {
+    display: inline-block;
   }
   .map-topbar {
     top: 13px;
@@ -1313,6 +1324,12 @@ dialog p:not(.dialog-lead) {
     top: 64px;
     gap: 9px;
   }
+  .navigation-tools .tool-stack:last-child {
+    position: absolute;
+    right: 44px;
+    top: 0;
+    flex-direction: row;
+  }
   .compass {
     width: 36px;
     height: 52px;
@@ -1338,7 +1355,10 @@ dialog p:not(.dialog-lead) {
     bottom: 32px;
   }
   .map-legend {
-    display: none;
+    max-width: 230px;
+    padding: 7px 8px;
+    font-size: 9px;
+    gap: 6px 10px;
   }
   .attribution {
     bottom: calc(47% + 3px);
@@ -1366,7 +1386,7 @@ dialog p:not(.dialog-lead) {
   }
   .action-hint {
     left: 12px;
-    top: 62px;
+    top: 112px;
     max-width: calc(100% - 70px);
     font-size: 10px;
     padding-left: 9px;
