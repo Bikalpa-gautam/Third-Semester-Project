@@ -1081,6 +1081,10 @@ dialog::backdrop {
 .dialog-top .icon-button {
   margin: -10px -12px -8px 0;
 }
+.dialog-top h2 {
+  margin: 0;
+  font-size: 28px;
+}
 dialog h2 {
   font-size: 31px;
   margin-bottom: 20px;
@@ -1111,6 +1115,22 @@ dialog p:not(.dialog-lead) {
 .project-credit strong {
   font-size: 14px;
   font-weight: 500;
+}
+.supervisor-list {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0 5px;
+  font-size: 12px;
+}
+.supervisor-list > span:first-child {
+  color: var(--muted);
+  margin-bottom: 2px;
+  font-size: 11px;
+}
+.chair-link {
+  color: var(--accent);
+  text-underline-offset: 3px;
+  line-height: 1.6;
 }
 .source-list {
   font-size: 11px;

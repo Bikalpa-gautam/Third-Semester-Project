@@ -2,7 +2,11 @@
 
 An interactive terrain model for the ETH Zürich semester project **3D pedagogical model of informal settlement for climate-risk training**.
 
-**Bikalpa Gautam · Supervisor: Ricardo Pérez-Restrepo**
+**Bikalpa Gautam**
+
+Supervisors: **Ricardo Pérez-Restrepo** and **Prof. Dr. Guillaume Habert**.
+
+[Chair of Sustainable Construction, ETH Zürich](https://sc.ibi.ethz.ch/en/)
 
 Live site: https://eluvito.netlify.app/
 

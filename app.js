@@ -181,7 +181,7 @@ function refresh() {
     ),
   );
   $("year-caption").textContent = state.year;
-  $("building-count").textContent = data?.buildings[state.year]?.length ?? "—";
+  $("building-count").textContent = data?.buildings[state.year]?.length ?? "";
   for (const [id, key] of [
     ["rain", "rain"],
     ["warmth", "warmth"],
@@ -276,7 +276,7 @@ function renderInspector() {
               `<div><span>${t(h.key)}</span><strong>${h.grades.map((g) => t(grades[g] || g)).join(", ")}</strong></div>`,
           )
           .join("")
-      : `<span>${t("noHazard")}</span><br><span>${t("coverageNote")}</span>`;
+      : `<span>${t("noHazard")}</span>`;
     $("inspect-content").innerHTML =
       `<div class="inspect-values"><div><small>${t("elevation")}</small><strong>${fmt(p.elevation)}<em>m</em></strong></div><div><small>${t("slope")}</small><strong>${fmt(p.slope, 1)}<em>°</em></strong></div></div><div class="inspect-hazards">${hazards}</div><div class="inspect-coords">EPSG:9377 · E ${fmt(p.easting, 1)} · N ${fmt(p.northing, 1)}<br>${t("measuredGrid")}</div>`;
   } else if (s.kind === "measure") {
@@ -285,7 +285,7 @@ function renderInspector() {
     $("inspect-eyebrow").textContent = t("measurement");
     $("inspect-title").textContent = t("measuredDistance");
     $("inspect-content").innerHTML =
-      `<div class="inspect-values"><div><small>${t("horizontal")}</small><strong>${fmt(result.distance, 1)}<em>m</em></strong></div><div><small>${t("rise")}</small><strong>${result.rise > 0 ? "+" : ""}${fmt(result.rise, 1)}<em>m</em></strong></div></div><p class="small-note">${t("measureDetail")}</p>`;
+      `<div class="inspect-values"><div><small>${t("horizontal")}</small><strong>${fmt(result.distance, 1)}<em>m</em></strong></div><div><small>${t("rise")}</small><strong>${result.rise > 0 ? "+" : ""}${fmt(result.rise, 1)}<em>m</em></strong></div></div>`;
   } else if (s.kind === "proposal") {
     const index = state.proposals.findIndex((p) => p.id === s.id),
       p = state.proposals[index];

@@ -318,9 +318,6 @@
                 step="5"
               />
             </section>
-            <p class="small-note" data-i18n="scenarioNote">
-              Visual effects only. Mapped hazard boundaries stay fixed.
-            </p>
             <button
               id="reset-scenario"
               class="secondary-button wide"
@@ -347,9 +344,6 @@
               role="group"
               aria-label="Proposal type"
             ></div>
-            <p class="small-note" data-i18n="planNote">
-              Proposed locations for discussion. Effects are not calculated.
-            </p>
             <div class="section-label plan-heading">
               <h3 data-i18n="yourPlan">Your plan</h3>
               <div class="history-buttons">
@@ -603,8 +597,8 @@
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
     <dialog id="about-dialog">
       <div class="dialog-top">
-        <span class="overline" data-i18n="aboutProject">ABOUT THE PROJECT</span
-        ><button
+        <h2>El Uvito</h2>
+        <button
           class="icon-button"
           data-close="about-dialog"
           data-title="close"
@@ -614,17 +608,25 @@
           <svg><use href="#i-close" /></svg>
         </button>
       </div>
-      <h2>El Uvito</h2>
       <p data-i18n="aboutBody">
-        An interactive model of El Uvito in San Cristóbal, Medellín, developed
-        for climate-risk learning and participatory planning.
+        A 3D model of El Uvito in San Cristóbal, Medellín, for climate-risk
+        training.
       </p>
       <div class="project-credit">
         <span data-i18n="semester">Semester project · ETH Zürich</span
-        ><strong>Bikalpa Gautam</strong
-        ><span
-          ><span data-i18n="supervisor">Supervisor</span>: Ricardo
-          Pérez-Restrepo</span
+        ><strong>Bikalpa Gautam</strong>
+        <div class="supervisor-list">
+          <span data-i18n="supervisor">Supervisors</span>
+          <span>Ricardo Pérez-Restrepo</span>
+          <span>Prof. Dr. Guillaume Habert</span>
+        </div>
+        <a
+          class="chair-link"
+          href="https://sc.ibi.ethz.ch/en/"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-i18n="chair"
+          >Chair of Sustainable Construction</a
         >
       </div>
       <button
@@ -637,8 +639,8 @@
     </dialog>
     <dialog id="sources-dialog">
       <div class="dialog-top">
-        <span class="overline" data-i18n="reference">REFERENCE</span
-        ><button
+        <h2 data-i18n="dataSources">Data sources</h2>
+        <button
           class="icon-button"
           data-close="sources-dialog"
           data-title="close"
@@ -648,50 +650,36 @@
           <svg><use href="#i-close" /></svg>
         </button>
       </div>
-      <h2 data-i18n="dataSources">Data sources</h2>
       <dl class="source-list">
         <div>
           <dt data-i18n="terrain">Terrain</dt>
           <dd data-i18n="terrainSource">
-            Medellín 2024 DEM. Native resolution: 1 m. This view uses a 320 ×
-            177 grid (approximately 9.1 m spacing).
+            Medellín DEM, 2024. Original resolution: 1 m; model grid: about 9 m.
           </dd>
         </div>
         <div>
           <dt data-i18n="aerial">Aerial</dt>
           <dd data-i18n="aerialSource">
-            Medellín 2024 orthophoto. Native resolution: 0.08 m; displayed at
-            1600 × 885 pixels.
+            Medellín orthophoto, 2024. Original resolution: 8 cm.
           </dd>
         </div>
         <div>
           <dt data-i18n="footprints">Building footprints</dt>
           <dd data-i18n="buildingSource">
-            Supplied Cuenca Alta detections from 2010, 2019 and 2021. Polygons
-            are not a household count. Displayed heights are schematic (6 m).
+            Cuenca Alta building detections, 2010, 2019 and 2021.
           </dd>
         </div>
         <div>
           <dt data-i18n="hazards">Mapped hazards</dt>
           <dd data-i18n="hazardSource">
-            Supplied POT 2014 mass-movement, flood and torrential-flow polygons.
-            These are historical mapped categories, not a current risk
-            assessment.
+            POT 2014: mass movement, flooding and torrential flow.
           </dd>
         </div>
         <div>
           <dt data-i18n="terrainAnalysis">Terrain analysis</dt>
           <dd data-i18n="analysisSource">
-            Slope and 50 m contours are derived from the displayed elevation
-            grid. Point measurements are approximate; coordinates use EPSG:9377.
-          </dd>
-        </div>
-        <div>
-          <dt data-i18n="scenarios">Scenarios</dt>
-          <dd data-i18n="scenarioSource">
-            Rain and warmth are visual effects without physical units. No flood
-            depth, temperature, landslide probability or intervention benefit is
-            simulated.
+            Slope and 50 m contours from the elevation model. Coordinates:
+            EPSG:9377.
           </dd>
         </div>
       </dl>
