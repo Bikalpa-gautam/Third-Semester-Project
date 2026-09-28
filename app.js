@@ -551,16 +551,28 @@ $("close-inspector").addEventListener("click", () => {
 });
 $("undo").addEventListener("click", () => historyMove("undo"));
 $("redo").addEventListener("click", () => historyMove("redo"));
-$("inspect-content").addEventListener("change", (e) => {
-  if (e.target.id === "proposal-note") {
-    const p = state.proposals.find((p) => p.id === state.selection?.id);
-    if (p && p.note !== e.target.value) {
-      changePlan(() => (p.note = e.target.value.slice(0, 500)));
-      renderPlan();
-      $("undo").disabled = false;
-      $("redo").disabled = true;
-    }
+let noteEditingId = null;
+$("inspect-content").addEventListener("focusin", (e) => {
+  if (e.target.id === "proposal-note") noteEditingId = null;
+});
+$("inspect-content").addEventListener("input", (e) => {
+  if (e.target.id !== "proposal-note") return;
+  const proposal = state.proposals.find((p) => p.id === state.selection?.id);
+  if (!proposal || proposal.note === e.target.value) return;
+  const updateNote = () => {
+    proposal.note = e.target.value.slice(0, 500);
+  };
+  // Save while typing, grouping each focused editing session into one undo step.
+  if (noteEditingId !== proposal.id) {
+    changePlan(updateNote);
+    noteEditingId = proposal.id;
+  } else {
+    updateNote();
+    savePlan();
   }
+  renderPlan();
+  $("undo").disabled = false;
+  $("redo").disabled = true;
 });
 $("inspect-content").addEventListener("click", (e) => {
   if (e.target.closest("#delete-proposal")) {

@@ -193,7 +193,9 @@ export class MapView {
     this.draw();
   }
   north() {
-    this.reset();
+    // This map is always north-up. Keep the user's zoom and position.
+    this.dirty = true;
+    this.draw();
   }
   zoom(f) {
     this.scaleFactor = clamp(this.scaleFactor * f, 0.55, 16);

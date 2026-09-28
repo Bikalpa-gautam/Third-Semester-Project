@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>El Uvito · Responsive layout check</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #e0e4de;
+        color: #263c30;
+        font: 13px system-ui;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 24px;
+        background: #f8f9f6;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        border-bottom: 1px solid #cdd5c8;
+      }
+      h1 {
+        font-size: 14px;
+        margin: 0 15px 0 0;
+        font-weight: 600;
+      }
+      button {
+        font: inherit;
+        padding: 7px 12px;
+        background: white;
+        border: 1px solid #c6d0c0;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      button[aria-pressed="true"] {
+        background: #245a48;
+        color: #fff;
+      }
+      main {
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        min-width: max-content;
+      }
+      iframe {
+        width: 390px;
+        height: 780px;
+        border: 1px solid #c6d0c0;
+        background: #fff;
+        box-shadow: 0 7px 25px #21332715;
+        border-radius: 8px;
+      }
+      output {
+        margin-left: auto;
+        font-variant-numeric: tabular-nums;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>El Uvito · Layout check</h1>
+      <button data-width="360" data-height="740" aria-pressed="false">
+        360 px</button
+      ><button data-width="390" data-height="780" aria-pressed="true">
+        390 px</button
+      ><button data-width="768" data-height="850" aria-pressed="false">
+        768 px</button
+      ><button data-width="1280" data-height="800" aria-pressed="false">
+        1280 px</button
+      ><output id="size">390 × 780</output>
+    </header>
+    <main>
+      <iframe
+        title="El Uvito responsive preview"
+        src="../?mode=map"
+        allow="clipboard-write; fullscreen"
+      ></iframe>
+    </main>
+    <script>
+      document.querySelectorAll("button[data-width]").forEach((button) =>
+        button.addEventListener("click", () => {
+          const frame = document.querySelector("iframe");
+          frame.style.width = button.dataset.width + "px";
+          frame.style.height = button.dataset.height + "px";
+          document
+            .querySelectorAll("button[data-width]")
+            .forEach((other) =>
+              other.setAttribute("aria-pressed", other === button),
+            );
+          document.querySelector("output").textContent =
+            button.dataset.width + " × " + button.dataset.height;
+        }),
+      );
+    </script>
+  </body>
+</html>

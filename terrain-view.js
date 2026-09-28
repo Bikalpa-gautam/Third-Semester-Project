@@ -689,9 +689,17 @@ export class TerrainView {
     const mpp =
       (2 * distance * Math.tan((this.camera.fov * Math.PI) / 360)) /
       this.canvas.clientHeight;
+    // Project grid north into screen space; the bearing depends on camera tilt.
+    const centre = this.controls.target.clone().project(this.camera);
+    const north = this.controls.target
+      .clone()
+      .add(new THREE.Vector3(0, 0, -100))
+      .project(this.camera);
+    const northX = (north.x - centre.x) * this.canvas.clientWidth;
+    const northY = (north.y - centre.y) * this.canvas.clientHeight;
     this.callbacks.viewChange({
       metresPerPixel: mpp,
-      heading: (-this.controls.getAzimuthalAngle() * 180) / Math.PI,
+      heading: (Math.atan2(northX, northY) * 180) / Math.PI,
     });
   }
   render() {

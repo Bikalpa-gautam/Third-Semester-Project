@@ -63,7 +63,7 @@ npm run check
 npm test
 ```
 
-The tests cover grid orientation, interpolation, slope, contours, horizontal distances, import validation, coordinate round-trips, translation coverage and actual terrain/building/skirt geometry. Browser checks should also cover layer toggles, measurement, proposal persistence, exports, English/Spanish, narrow screens and both WebGL and map-only devices.
+The tests cover grid orientation, interpolation, slope, contours, horizontal distances, import validation, coordinate round-trips, translation coverage and actual terrain/building/skirt geometry. Browser checks should also cover layer toggles, measurement, proposal persistence, exports, English/Spanish, narrow screens and both WebGL and map-only devices. Open `tests/responsive.html` on the same server for a resizable device-width preview.
 
 ## Files
 
