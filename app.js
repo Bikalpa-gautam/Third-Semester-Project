@@ -870,7 +870,8 @@ async function boot() {
       contours,
       callbacks,
     );
-  } catch {
+  } catch (error) {
+    console.warn("3D view unavailable:", error);
     state.mode = "map";
     const button = $$('[data-mode="3d"]')[0];
     button.disabled = true;
