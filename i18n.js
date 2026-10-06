@@ -82,6 +82,8 @@ export const messages = {
     riparian: "Riparian buffers",
     river: "Streams",
     boundary: "Settlement boundary",
+    boundaryFocus: "Blur outside boundary",
+    selectSettlement: "Settlement",
     contours: "Contours · 50 m",
     drainage: "Drainage",
     garden: "Rain garden",
@@ -232,6 +234,8 @@ export const messages = {
     riparian: "Retiros hídricos",
     river: "Quebradas",
     boundary: "Límite del asentamiento",
+    boundaryFocus: "Difuminar fuera del límite",
+    selectSettlement: "Asentamiento",
     contours: "Curvas de nivel · 50 m",
     drainage: "Drenaje",
     garden: "Jardín de lluvia",
@@ -297,6 +301,6 @@ export const messages = {
     chair: "Cátedra de Construcción Sostenible",
   },
 };
-export function translator(lang) {
-  return (key) => messages[lang]?.[key] ?? messages.en[key] ?? key;
+export function translator(lang, settlement = "El Uvito") {
+  return (key) => (messages[lang]?.[key] ?? messages.en[key] ?? key).replaceAll("El Uvito", settlement);
 }

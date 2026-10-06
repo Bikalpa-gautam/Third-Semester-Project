@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Prepare a lightweight El Uvito 3D pilot from the supplied GIS layers.
+"""Prepare El Uvito or La Palma from the original GIS layers.
 
 Inputs:
   - Ricardo's GIS_layers archive, extracted beside this project.
   - Medellin's public ArcGIS ImageServer for the 2024 DEM and orthophoto.
 
 Outputs:
-  - assets/el-uvito-ortho-2024.jpg
-  - assets/el-uvito-data.js
+  - assets/<settlement>-ortho-2024.jpg
+  - assets/<settlement>-data.js
 
 The browser model deliberately keeps building heights schematic because the
 source package contains footprints but no measured building-height field.
@@ -15,6 +15,7 @@ source package contains footprints but no measured building-height field.
 
 from __future__ import annotations
 
+import argparse
 import json
 import math
 import os
@@ -28,7 +29,7 @@ import shapefile
 import tifffile
 from pyproj import CRS, Transformer
 from shapely.geometry import box, shape
-from shapely.ops import transform as geom_transform
+from shapely.ops import transform as geom_transform, unary_union
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -138,8 +139,16 @@ def line_parts(geometry, clip_geometry, centre_x: float, centre_y: float, simpli
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Prepare El Uvito or La Palma with the same GIS workflow.")
+    parser.add_argument("--settlement", choices=("el-uvito", "la-palma"), default="el-uvito")
+    parser.add_argument("--gis-root", type=Path, default=GIS_ROOT)
+    args = parser.parse_args()
+    gis_root = args.gis_root
+    slug = args.settlement
+    name = "La Palma" if slug == "la-palma" else "El Uvito"
+    basins = ("Alta", "Media") if slug == "la-palma" else ("Alta",)
     ASSET_DIR.mkdir(parents=True, exist_ok=True)
-    settlement_path = GIS_ROOT / "Methodology/El Uvito.shp"
+    settlement_path = gis_root / f"Methodology/{name}.shp"
     settlement_geometry, _ = next(transformed_geometries(settlement_path, TARGET_CRS))
     xmin, ymin, xmax, ymax = settlement_geometry.bounds
     extent = (xmin - PADDING_METRES, ymin - PADDING_METRES, xmax + PADDING_METRES, ymax + PADDING_METRES)
@@ -147,14 +156,14 @@ def main() -> None:
     centre_y = (extent[1] + extent[3]) / 2
     clip_geometry = box(*extent)
 
-    dem_path = ASSET_DIR / "el-uvito-dem-2024.tif"
+    dem_path = ASSET_DIR / f"{slug}-dem-2024.tif"
     dem_export = export_image(DEM_SERVICE, extent, DEM_WIDTH, "tiff", dem_path)
     elevation = tifffile.imread(dem_path).astype(np.float32)
     if elevation.ndim > 2:
         elevation = elevation.squeeze()
     if elevation.shape != (dem_export["height"], dem_export["width"]):
         elevation = elevation.reshape((dem_export["height"], dem_export["width"]))
-    finite = np.isfinite(elevation)
+    finite = np.isfinite(elevation) & (elevation > -1000) & (elevation < 10000)
     if not finite.any():
         raise RuntimeError("DEM export contains no finite elevation values")
     fill_value = float(np.nanmedian(elevation[finite]))
@@ -162,27 +171,34 @@ def main() -> None:
     dem_min = float(elevation.min())
     dem_max = float(elevation.max())
 
-    ortho_path = ASSET_DIR / "el-uvito-ortho-2024.jpg"
+    ortho_path = ASSET_DIR / f"{slug}-ortho-2024.jpg"
     ortho_export = export_image(ORTHO_SERVICE, extent, ORTHO_WIDTH, "jpg", ortho_path)
     with Image.open(ortho_path) as image:
         image.convert("RGB").save(ortho_path, quality=88, optimize=True)
 
     buildings: dict[str, list[list[list[float]]]] = {}
     for year in (2010, 2019, 2021):
-        path = GIS_ROOT / f"urban_sprawl/Cuenca Alta {year}.shp"
         year_parts = []
-        for geometry, _ in transformed_geometries(path, TARGET_CRS):
-            if not geometry.intersects(settlement_geometry):
-                continue
-            for ring in polygon_parts(geometry, settlement_geometry, centre_x, centre_y, simplify=0.15):
-                year_parts.append(ring)
+        covered = None
+        for basin in basins:
+            path = gis_root / f"urban_sprawl/Cuenca {basin} {year}.shp"
+            basin_geometries = []
+            for geometry, _ in transformed_geometries(path, TARGET_CRS):
+                if not geometry.intersects(settlement_geometry):
+                    continue
+                # La Palma spans both footprint sets. Do not draw their overlap twice.
+                selected = geometry if covered is None else geometry.difference(covered)
+                for ring in polygon_parts(selected, settlement_geometry, centre_x, centre_y, simplify=0.15):
+                    year_parts.append(ring)
+                basin_geometries.append(geometry)
+            covered = unary_union(([covered] if covered is not None else []) + basin_geometries)
         buildings[str(year)] = year_parts
 
     hazards = {}
     hazard_specs = {
-        "massMovement": (GIS_ROOT / "Risk/pot48_2014_amenaza_movimi.shp", "grado_amen"),
-        "flood": (GIS_ROOT / "Risk/pot48_2014_amenaza_inunda.shp", "grado_amen"),
-        "torrential": (GIS_ROOT / "Risk/pot48_2014_amenaza_avenid.shp", "grado_amen"),
+        "massMovement": (gis_root / "Risk/pot48_2014_amenaza_movimi.shp", "grado_amen"),
+        "flood": (gis_root / "Risk/pot48_2014_amenaza_inunda.shp", "grado_amen"),
+        "torrential": (gis_root / "Risk/pot48_2014_amenaza_avenid.shp", "grado_amen"),
     }
     for key, (path, grade_field) in hazard_specs.items():
         features = []
@@ -195,7 +211,7 @@ def main() -> None:
         hazards[key] = features
 
     riparian = []
-    riparian_path = GIS_ROOT / "Natural Environmentl/All_Riparian_Buffers_San_Cristobal.shp"
+    riparian_path = gis_root / "Natural Environmentl/All_Riparian_Buffers_San_Cristobal.shp"
     for geometry, attributes in transformed_geometries(riparian_path, TARGET_CRS):
         if not geometry.intersects(clip_geometry):
             continue
@@ -204,7 +220,7 @@ def main() -> None:
             riparian.append({"distance": distance, "ring": ring})
 
     rivers = []
-    river_path = GIS_ROOT / "Natural Environmentl/Riverbed_La_Iguaná.shp"
+    river_path = gis_root / "Natural Environmentl/Riverbed_La_Iguaná.shp"
     for geometry, attributes in transformed_geometries(river_path, TARGET_CRS):
         if not geometry.intersects(clip_geometry):
             continue
@@ -214,7 +230,9 @@ def main() -> None:
     boundary = polygon_parts(settlement_geometry, clip_geometry, centre_x, centre_y, simplify=1.0)
 
     payload = {
-        "name": "El Uvito",
+        "name": name,
+        "site": slug,
+        "buildingBasins": list(basins),
         "crs": "EPSG:9377",
         "extent": [round(value, 3) for value in extent],
         "centre": [round(centre_x, 3), round(centre_y, 3)],
@@ -223,7 +241,7 @@ def main() -> None:
         "minimumElevation": round(dem_min, 2),
         "maximumElevation": round(dem_max, 2),
         "heights": [round(float(value), 1) for value in elevation.ravel()],
-        "orthophoto": "assets/el-uvito-ortho-2024.jpg",
+        "orthophoto": f"assets/{slug}-ortho-2024.jpg",
         "orthophotoSize": [ortho_export["width"], ortho_export["height"]],
         "buildings": buildings,
         "hazards": hazards,
@@ -233,16 +251,19 @@ def main() -> None:
         "notes": {
             "terrain": "Medellín 2024 digital elevation model, 1 m native pixel size, resampled for browser display.",
             "imagery": "Medellín 2024 orthophoto, 0.08 m native pixel size, resampled for browser display.",
-            "buildings": "Supplied Cuenca Alta detected-footprint layers; displayed heights are schematic because no measured heights were provided.",
+            "buildings": f"Cuenca {' and '.join(basins)} detected-footprint layers; displayed heights are schematic because no measured heights were provided.",
             "hazards": "Supplied POT 2014 hazard polygons. Scenario controls change display emphasis and do not predict an event.",
         },
     }
 
-    output_path = ASSET_DIR / "el-uvito-data.js"
-    output_path.write_text("window.EL_UVITO_DATA=" + json.dumps(payload, separators=(",", ":"), ensure_ascii=False) + ";\n", encoding="utf-8")
+    output_path = ASSET_DIR / f"{slug}-data.js"
+    global_name = "LA_PALMA_DATA" if slug == "la-palma" else "EL_UVITO_DATA"
+    output_path.write_text(f"window.{global_name}=" + json.dumps(payload, separators=(",", ":"), ensure_ascii=False) + ";\n", encoding="utf-8")
     dem_path.unlink(missing_ok=True)
 
     summary = {
+        "settlement": name,
+        "buildingBasins": list(basins),
         "terrainGrid": [payload["width"], payload["height"]],
         "elevationRange": [payload["minimumElevation"], payload["maximumElevation"]],
         "orthophoto": payload["orthophotoSize"],

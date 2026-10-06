@@ -128,7 +128,7 @@
             stroke-linecap="round"
           />
         </svg>
-        <h1>El Uvito</h1>
+        <h1><select id="settlement-select" aria-label="Settlement"><option value="el-uvito">El Uvito</option><option value="la-palma">La Palma</option></select></h1>
         <span class="brand-divider"></span
         ><span class="location">Medellín, Colombia</span>
       </div>
@@ -229,6 +229,11 @@
             <section class="settings-section layer-section">
               <h3 data-i18n="settlement">Settlement & water</h3>
               <div id="context-layers"></div>
+              <label class="layer-row boundary-focus" id="boundary-focus-row">
+                <span data-i18n="boundaryFocus">Blur outside boundary</span>
+                <input type="checkbox" id="boundary-focus">
+                <i class="switch-track" aria-hidden="true"></i>
+              </label>
             </section>
             <section class="settings-section layer-section">
               <div class="section-label">
@@ -597,7 +602,7 @@
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
     <dialog id="about-dialog">
       <div class="dialog-top">
-        <h2>El Uvito</h2>
+        <h2 data-settlement-name>El Uvito</h2>
         <button
           class="icon-button"
           data-close="about-dialog"

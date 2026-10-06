@@ -23,7 +23,6 @@ const escapeHTML = (value) =>
   );
 const icon = (name, cls = "") =>
   `<svg class="${cls}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
-const storageKey = "el-uvito-plan-v1";
 const stored = (key) => {
   try {
     return localStorage.getItem(key);
@@ -32,9 +31,12 @@ const stored = (key) => {
   }
 };
 const params = new URLSearchParams(location.search);
+const site = params.get("settlement") === "la-palma" ? "la-palma" : "el-uvito";
+const siteName = site === "la-palma" ? "La Palma" : "El Uvito";
+const storageKey = `${site}-plan-v1`;
 let lang =
   (params.get("lang") || stored("el-uvito-language")) === "es" ? "es" : "en";
-let t = translator(lang),
+let t = translator(lang, siteName),
   model,
   mapView,
   terrainView,
@@ -43,7 +45,7 @@ let t = translator(lang),
   selectedTab = "explore",
   ready = false,
   metresPerPixel = 4;
-const data = window.EL_UVITO_DATA;
+let data = site === "el-uvito" ? window.EL_UVITO_DATA : null;
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const state = {
   year: 2021,
@@ -54,6 +56,7 @@ const state = {
   opacity: 65,
   relief: 1,
   orbit: false,
+  boundaryFocus: params.get("focus") === "1",
   reducedMotion,
   layers: {
     buildings: true,
@@ -81,6 +84,7 @@ if (params.has("layers")) {
   const keys = params.get("layers").split(",");
   for (const k of Object.keys(state.layers)) state.layers[k] = keys.includes(k);
 }
+if (state.boundaryFocus) state.layers.boundary = true;
 for (const [key, min, max] of [
   ["rain", 0, 100],
   ["warmth", 0, 100],
@@ -114,8 +118,19 @@ function layerRows(keys) {
 }
 function translate() {
   document.documentElement.lang = lang;
-  t = translator(lang);
+  t = translator(lang, siteName);
+  document.title = siteName;
+  $("settlement-select").value = site;
+  $("settlement-select").setAttribute("aria-label", t("selectSettlement"));
+  $$("[data-settlement-name]").forEach((el) => (el.textContent = siteName));
+  $("scene-wrap").setAttribute("aria-label", `Interactive model of ${siteName}`);
   $$("[data-i18n]").forEach((el) => (el.textContent = t(el.dataset.i18n)));
+  if (site === "la-palma" && data) {
+    document.querySelector('[data-i18n="buildingSource"]').textContent = lang === "en"
+      ? "Cuenca Alta and Cuenca Media building detections, 2010, 2019 and 2021."
+      : "Detecciones de edificaciones de Cuenca Alta y Cuenca Media, 2010, 2019 y 2021.";
+    document.querySelector('[data-i18n="terrainSource"]').textContent = t("terrainSource").replace("9 m", `${fmt((data.extent[2] - data.extent[0]) / (data.width - 1), 1)} m`);
+  }
   $$("[data-title]").forEach((el) => {
     el.title = t(el.dataset.title);
     el.setAttribute("aria-label", t(el.dataset.title));
@@ -181,6 +196,8 @@ function refresh() {
     ),
   );
   $("year-caption").textContent = state.year;
+  $("boundary-focus").checked = state.boundaryFocus;
+  $("boundary-focus-row").hidden = !state.layers.boundary;
   $("building-count").textContent = data?.buildings[state.year]?.length ?? "";
   for (const [id, key] of [
     ["rain", "rain"],
@@ -453,7 +470,7 @@ function exportPlan() {
     new Blob([JSON.stringify(serializePlan(state.proposals, data), null, 2)], {
       type: "application/json",
     }),
-    "el-uvito-plan.json",
+    `${site}-plan.json`,
   );
   toast(t("planExported"));
 }
@@ -503,8 +520,25 @@ document.querySelector(".panel-tabs").addEventListener("keydown", (e) => {
 $("sidebar").addEventListener("change", (e) => {
   if (e.target.matches("[data-layer]")) {
     state.layers[e.target.dataset.layer] = e.target.checked;
+    if (e.target.dataset.layer === "boundary" && !e.target.checked)
+      state.boundaryFocus = false;
     refresh();
   }
+});
+$("boundary-focus").addEventListener("change", (e) => {
+  state.boundaryFocus = e.target.checked;
+  refresh();
+});
+$("settlement-select").addEventListener("change", (e) => {
+  const url = new URL(location.href);
+  url.searchParams.set("settlement", e.target.value);
+  url.searchParams.delete("view");
+  for (const key of ["year", "base", "mode", "rain", "warmth", "relief", "opacity"])
+    url.searchParams.set(key, String(state[key]));
+  url.searchParams.set("layers", Object.keys(state.layers).filter((k) => state.layers[k]).join(","));
+  url.searchParams.set("focus", state.boundaryFocus ? "1" : "0");
+  url.searchParams.set("lang", lang);
+  location.assign(url.href);
 });
 for (const [id, key] of [
   ["rain-range", "rain"],
@@ -666,6 +700,8 @@ $("share-view").addEventListener("click", async () => {
       .join(","),
   );
   url.searchParams.set("lang", lang);
+  url.searchParams.set("settlement", site);
+  if (state.boundaryFocus) url.searchParams.set("focus", "1");
   const view = currentView()?.getView();
   if (view)
     url.searchParams.set(
@@ -703,7 +739,7 @@ $("save-view").addEventListener("click", () => {
     ctx.fillRect(0, 0, w, h + 122);
     ctx.fillStyle = "#253a33";
     ctx.font = "28px Georgia";
-    ctx.fillText("El Uvito", 24, 39);
+    ctx.fillText(siteName, 24, 39);
     ctx.font = "11px Arial";
     ctx.fillStyle = "#64736b";
     ctx.fillText(
@@ -725,7 +761,7 @@ $("save-view").addEventListener("click", () => {
     ctx.fillText(details, 20, h + 104);
     output.toBlob((blob) => {
       if (blob) {
-        download(blob, `el-uvito-${state.year}-${state.base}.png`);
+        download(blob, `${site}-${state.year}-${state.base}.png`);
         toast(t("screenshotSaved"));
       } else toast(t("imageFail"));
     }, "image/png");
@@ -769,6 +805,17 @@ $("plan-file").addEventListener("change", async (e) => {
 
 async function boot() {
   translate();
+  if (site === "la-palma") {
+    await new Promise((resolve) => {
+      const script = document.createElement("script");
+      const timeout = setTimeout(resolve, 15000);
+      script.src = "assets/la-palma-data.js";
+      script.onload = script.onerror = () => { clearTimeout(timeout); resolve(); };
+      document.head.append(script);
+    });
+    data = window.LA_PALMA_DATA;
+    translate();
+  }
   if (!data) {
     $("loading").innerHTML =
       `<p>${t("dataFail")}</p><button class="secondary-button" id="retry-load">${t("retry")}</button>`;
@@ -859,7 +906,7 @@ async function boot() {
   requestAnimationFrame(frame);
 }
 boot().catch((error) => {
-  console.error("El Uvito failed to initialize:", error);
+  console.error(`${siteName} failed to initialize:`, error);
   $("loading").innerHTML =
     `<p>${t("dataFail")}</p><button class="secondary-button" id="retry-load">${t("retry")}</button>`;
   $("retry-load").onclick = () => location.reload();

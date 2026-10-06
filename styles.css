@@ -130,6 +130,28 @@ h1 {
   letter-spacing: -1.2px;
   white-space: nowrap;
 }
+#settlement-select {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  border: 0;
+  background: transparent;
+  padding: 0 2px 0 0;
+  cursor: pointer;
+  max-width: 165px;
+}
+#settlement-select option {
+  font: 16px Arial, sans-serif;
+  letter-spacing: normal;
+}
+.layer-row.boundary-focus {
+  padding-left: 23px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.boundary-focus > span:first-child {
+  flex: 1;
+}
 .brand-divider {
   height: 21px;
   width: 1px;

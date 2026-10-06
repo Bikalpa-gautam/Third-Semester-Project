@@ -1,6 +1,7 @@
 import * as THREE from "./vendor/three.module.min.js";
 import { OrbitControls } from "./vendor/OrbitControls.js?v=2";
 import { LAYERS, PROPOSALS, densify, clamp } from "./model.js";
+import { BoundaryFocus } from "./boundary-focus.js";
 
 export function terrainGeometry(model) {
   const { data, width, depth } = model;
@@ -684,7 +685,10 @@ export class TerrainView {
     }
     if (!this.dirty) return;
     this.dirty = false;
-    this.renderer.render(this.scene, this.camera);
+    if (this.state.boundaryFocus) {
+      this.boundaryFocus ||= new BoundaryFocus(this.renderer, this.model, this.geometry);
+      this.boundaryFocus.render(this.scene, this.camera, this.state.relief);
+    } else this.renderer.render(this.scene, this.camera);
     const distance = this.camera.position.distanceTo(this.controls.target);
     const mpp =
       (2 * distance * Math.tan((this.camera.fov * Math.PI) / 360)) /

@@ -384,9 +384,40 @@ export class MapView {
       ctx.lineWidth = 2;
       ctx.stroke();
     }
+    if (s.boundaryFocus) this.blurOutsideBoundary();
     this.callbacks.viewChange({
       metresPerPixel: 1 / this.pixelsPerMetre,
       heading: 0,
     });
+  }
+  blurOutsideBoundary() {
+    const { canvas, ctx } = this;
+    this.focusSource ||= document.createElement("canvas");
+    const source = this.focusSource;
+    if (source.width !== canvas.width || source.height !== canvas.height) {
+      source.width = canvas.width;
+      source.height = canvas.height;
+    }
+    const sharp = source.getContext("2d");
+    sharp.clearRect(0, 0, source.width, source.height);
+    sharp.drawImage(canvas, 0, 0);
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.filter = `blur(${6 * this.dpr}px)`;
+    ctx.drawImage(source, 0, 0);
+    ctx.filter = "none";
+    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    ctx.beginPath();
+    for (const ring of this.model.data.boundary) {
+      ring.forEach(([x, n], i) => {
+        const p = this.project(x, n);
+        i ? ctx.lineTo(...p) : ctx.moveTo(...p);
+      });
+      ctx.closePath();
+    }
+    ctx.clip();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(source, 0, 0);
+    ctx.restore();
   }
 }

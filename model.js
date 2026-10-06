@@ -1,10 +1,10 @@
 // Geographic calculations use local east/north metres in the supplied EPSG:9377 grid.
 export const LAYERS = {
   buildings: { color: "#f3e2b9", label: "buildings" },
-  massMovement: { color: "#bc614c", label: "massMovement" },
+  massMovement: { color: "#a463d8", label: "massMovement" },
   flood: { color: "#479bd1", label: "flood" },
   torrential: { color: "#d49344", label: "torrential" },
-  riparian: { color: "#61967a", label: "riparian" },
+  riparian: { color: "#16b3a6", label: "riparian" },
   river: { color: "#83c5e2", label: "river" },
   boundary: { color: "#ffffff", label: "boundary" },
   contours: { color: "#736f59", label: "contours" },
@@ -184,7 +184,7 @@ export function measurePoints(a, b, model) {
 export function serializePlan(proposals, data) {
   return {
     version: 1,
-    site: "el-uvito",
+    site: data.site || "el-uvito",
     crs: data.crs,
     proposals: proposals.map((p) => ({
       id: p.id,
@@ -200,7 +200,7 @@ export function parsePlan(input, model) {
   if (
     !input ||
     input.version !== 1 ||
-    input.site !== "el-uvito" ||
+    input.site !== (model.data.site || "el-uvito") ||
     input.crs !== model.data.crs ||
     !Array.isArray(input.proposals) ||
     input.proposals.length > 100
@@ -216,7 +216,7 @@ export function parsePlan(input, model) {
       throw new Error("Invalid proposal");
     const x = p.easting - model.data.centre[0],
       n = p.northing - model.data.centre[1];
-    if (!model.inside(x, n)) throw new Error("Proposal outside El Uvito");
+    if (!model.inside(x, n)) throw new Error("Proposal outside study area");
     const id = `proposal-${i}`;
     return {
       id,
