@@ -1,7 +1,7 @@
 import * as THREE from "./vendor/three.module.min.js";
 import { FUTURE_COLORS, cellRing } from "./future-model.js";
 
-export function futureImage(b, result, showTrees = true) {
+export function futureImage(b, result, showTrees = true, showCandidates = false) {
   const canvas = document.createElement("canvas");
   // One pixel per analysis cell; transparent gaps keep the underlying aerial image visible.
   canvas.width = b.width; canvas.height = b.height;
@@ -11,10 +11,11 @@ export function futureImage(b, result, showTrees = true) {
   for(let i=0;i<b.flags.length;i++) {
     if(b.insideFraction[i]<=0)continue;
     let color,alpha;
-    if(result.housingSet.has(i)){color=colors.housing;alpha=185;}
-    else if(showTrees && result.gainSet.has(i)){color=colors.gain;alpha=165;}
-    else if(showTrees && result.lossSet.has(i)){color=colors.loss;alpha=160;}
-    else if(showTrees && b.treeFraction[i]>0){color=colors.trees;alpha=Math.round(90*b.treeFraction[i]);}
+    if(result.housingSet.has(i)){color=colors.housing;alpha=195;}
+    else if(showTrees && result.gainSet.has(i)){color=colors.gain;alpha=120;}
+    else if(showTrees && result.lossSet.has(i)){color=colors.loss;alpha=115;}
+    else if(showCandidates && result.eligibleSet.has(i)){color=colors.candidates;alpha=70;}
+    else if(showTrees && b.treeFraction[i]>0){color=colors.trees;alpha=Math.round(40*b.treeFraction[i]);}
     else continue;
     pixels.data.set([...color,Math.round(alpha*b.insideFraction[i])],i*4);
   }
@@ -49,7 +50,7 @@ export class FutureView {
     if(!this.group.visible)return;
     const key=result.key+String(settings.trees);
     if(this.key===key)return;
-    this.key=key;this.texture.image=futureImage(baseline,result,settings.trees);this.texture.needsUpdate=true;
+    this.key=key;this.texture.image=futureImage(baseline,result,settings.trees,settings.candidates);this.texture.needsUpdate=true;
     const geometry=housingZoneGeometry(this.model,baseline,result);
     this.blocks.geometry.dispose();this.blocks.geometry=geometry;
   }

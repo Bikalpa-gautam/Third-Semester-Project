@@ -35,6 +35,7 @@
         <path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 0 1 14 0Z" />
         <circle cx="12" cy="10" r="2.5" />
       </symbol>
+      <symbol id="i-future" viewBox="0 0 24 24"><path d="M3 20h18M4 16l5-5 4 3 7-9M15 5h5v5"/></symbol>
       <symbol id="i-close" viewBox="0 0 24 24">
         <path d="m6 6 12 12M6 18 18 6" />
       </symbol>
@@ -185,7 +186,7 @@
             <svg><use href="#i-sun" /></svg
             ><span data-i18n="scenarios">Scenarios</span>
           </button>
-          <button type="button" id="tab-future" role="tab" aria-selected="false" aria-controls="panel-future" tabindex="-1" data-tab="future"><span data-i18n="future">Future</span></button>
+          <button type="button" id="tab-future" role="tab" aria-selected="false" aria-controls="panel-future" tabindex="-1" data-tab="future"><svg><use href="#i-future" /></svg><span data-i18n="future">Future</span></button>
           <button
             type="button"
             id="tab-plan"
@@ -354,6 +355,8 @@
               <details class="future-evidence"><summary data-i18n="viewTrends">View mapped trends</summary><div id="future-trends"></div></details>
               <div id="future-shortfall" class="future-shortfall" hidden></div>
               <label class="layer-row future-toggle"><span data-i18n="showTreeCover">Show tree cover</span><input id="future-trees" type="checkbox" checked><i class="switch-track" aria-hidden="true"></i></label>
+              <label class="layer-row future-toggle"><span data-i18n="showCandidates">Show candidate land</span><input id="future-candidates" type="checkbox"><i class="switch-track" aria-hidden="true"></i></label>
+              <p class="future-note" id="future-candidate-note" hidden></p>
               <details class="settings-section future-assumptions"><summary data-i18n="adjustAssumptions">Adjust assumptions</summary>
                 <label for="future-household"><span data-i18n="householdSize">People per dwelling</span><input id="future-household" type="number" min="1" max="8" step="0.5" value="3"></label>
                 <label for="future-infill"><span data-i18n="infillShare">Within existing fabric (%)</span><input id="future-infill" type="number" min="0" max="90" step="5" value="60"></label>

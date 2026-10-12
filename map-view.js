@@ -329,7 +329,7 @@ export class MapView {
       const key=s.futureResult.key+String(s.future.trees);
       if(this.futureKey!==key) {
         this.futureKey=key;
-        this.futureRaster=futureImage(s.futureBaseline,s.futureResult,s.future.trees);
+        this.futureRaster=futureImage(s.futureBaseline,s.futureResult,s.future.trees,s.future.candidates);
       }
       ctx.save();ctx.imageSmoothingEnabled=false;
       ctx.drawImage(this.futureRaster,tl[0],tl[1],dw,dh);

@@ -71,6 +71,8 @@ Candidates must also meet the chosen slope limit (initially 25 degrees) and be w
 
 Eligible cells are ranked using:
 
+**Show candidate land** displays the full eligible pool, including land not selected by the present demand. Click a point to inspect the relevant exclusions or see that it remains eligible but unused. The algorithm evaluates the whole boundary, not only its upper part. At target year 2025, ordinary growth demand is zero; existing cream buildings are baseline outlines. The revised tree-cover overlay uses a subtle olive tint so the aerial image remains legible.
+
 `score = 0.58 × exp(−distance / distance scale) + 0.24 × (1 − slope / 40) + 0.18 × stable pattern variation`
 
 The distance scale is 180 m for compact/restoration and 500 m for expansion. Weights and distances are transparent **heuristics**, not fitted probabilities. “Another pattern” changes a reproducible seed; it explores alternatives rather than sampling a calibrated uncertainty distribution.

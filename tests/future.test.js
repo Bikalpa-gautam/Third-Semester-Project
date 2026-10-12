@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
-import { futureDefaults, policySettings, projectFuture, exportFuture, cellRing, linearTrend } from "../future-model.js";
+import { futureDefaults, policySettings, projectFuture, exportFuture, cellRing, linearTrend, housingExclusions } from "../future-model.js";
 import { createModel, pointInRing } from "../model.js";
 import { housingZoneGeometry } from "../future-view.js";
 import { buildingGeometry } from "../terrain-view.js";
@@ -67,6 +67,15 @@ for(const site of ["el-uvito","la-palma"]) {
     const restored=projectFuture(b,{...c,...policySettings("restoration",b),mappedTreeTrend:false});
     assert.ok(restored.treeHa>r.baselineTreeHa);
     assert.ok(restored.gain.every((i)=>(b.flags[i]&(1|8|16))===0));
+  });
+  test(`${site}: inspection reasons describe the complete candidate pool`,()=>{
+    for(const policy of ["compact","expansion","restoration"]){
+      const c={...futureDefaults(b),...policySettings(policy,b)},r=projectFuture(b,c);
+      for(let i=0;i<b.flags.length;i++)assert.equal(housingExclusions(b,c,i).length===0,r.eligibleSet.has(i));
+      assert.ok(r.housing.every((i)=>r.eligibleSet.has(i)));
+      assert.deepEqual(housingExclusions(b,c,-1),["outsideStudy"]);
+      assert.deepEqual(housingExclusions(b,c,b.flags.length),["outsideStudy"]);
+    }
   });
 }
 test("linear trend recovers an independent straight line and housing trend uses the original roof history",()=>{

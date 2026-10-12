@@ -1,7 +1,7 @@
 import { clamp } from "./model.js";
 
 export const FUTURE_COLORS = {
-  trees: "#32735c", housing: "#efbd62", loss: "#c2685c", gain: "#8ac781",
+  trees: "#879172", housing: "#dba956", loss: "#b87761", gain: "#a1b06e", candidates: "#cbbda0",
 };
 export function linearTrend(points) {
   if(!points.length)return {slope:0,predict:()=>0};
@@ -19,7 +19,18 @@ export function futureDefaults(baseline) {
   return { enabled: false, year: 2030, policy: "compact", model: "footprint", rate: baseline.population.annualRate,
     household: 3, infill: 60, land: 160, slope: 25, protectTrees: true,
     treeRate: 0, restoration: 0, rehouse: 0, seed: 1, trees: true,
-    observedTreeRate: treeRate, mappedTreeTrend: false };
+    observedTreeRate: treeRate, mappedTreeTrend: false, candidates: false };
+}
+
+export function housingExclusions(b, input, i) {
+  if(!Number.isInteger(i) || i<0 || i>=b.flags.length)return ["outsideStudy"];
+  const reasons=[];
+  for(const [flag,label] of [[1,"outsideStudy"],[2,"hazardExcluded"],[4,"riparianExcluded"],[8,"occupiedExcluded"],[16,"unknownCoverExcluded"]])
+    if(b.flags[i]&flag)reasons.push(label);
+  if(b.slope[i]>clamp(Number(input.slope)||25,5,40))reasons.push("slopeExcluded");
+  if(b.distance[i]>800)reasons.push("remoteExcluded");
+  if(input.protectTrees && b.treeFraction[i]>0)reasons.push("treeExcluded");
+  return reasons;
 }
 
 export function policySettings(policy, baseline) {
@@ -122,6 +133,7 @@ export function projectFuture(b, input) {
     key: JSON.stringify(input), year: 2025+years, population, demand, growthDemand, rehouse,
     accommodated, outward, allocated, unallocated: outward-allocated,
     housing, loss: [...new Set(loss)], gain, housingSet,
+    eligible: housingCandidates.map((p)=>p.i), eligibleSet: new Set(housingCandidates.map((p)=>p.i)),
     lossSet: new Set(loss), gainSet: new Set(gain),
     landHa: housing.length*cellArea/10000, treeHa: remaining,
     treeLossHa: Math.max(0,lossHa), treeGainHa: gain.reduce((a,i)=>a+(1-b.treeFraction[i])*cellArea/10000,0),

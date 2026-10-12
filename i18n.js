@@ -302,6 +302,8 @@ export const messages = {
   },
 };
 Object.assign(messages.en, {
+  showCandidates: "Show candidate land", candidateLand: "Candidate land", inspectCandidates: "Click a map point to check its constraints.",
+  housingScreening: "Housing screening", outsideStudy: "outside the full study boundary", hazardExcluded: "mapped hazard exclusion", riparianExcluded: "riparian buffer", occupiedExcluded: "mapped built land or footprints", unknownCoverExcluded: "water or unknown land cover", slopeExcluded: "above the chosen slope limit", remoteExcluded: "over 800 m from mapped development", treeExcluded: "trees protected from housing", eligibleUnused: "Eligible under these assumptions; not selected for the current demand and ranking.", selectedHousing: "Selected housing zone under the current assumptions.",
   future: "Future", futureTitle: "Future scenarios", futureIntro: "Compare growth, housing and tree cover.",
   futureUnavailable: "Future data could not load. The existing map is still available.",
   showFuture: "Show future scenario", targetYear: "Target year", compactGrowth: "Compact", outwardGrowth: "Expansion", restorationGrowth: "Restoration",
@@ -334,6 +336,8 @@ Object.assign(messages.en, {
   fullResearch: "Read the research and validation notes", scenarioAtPoint: "Scenario at this point", baselineCell: "No allocated change in this cell",
 });
 Object.assign(messages.es, {
+  showCandidates: "Mostrar suelo candidato", candidateLand: "Suelo candidato", inspectCandidates: "Seleccionar un punto para revisar sus restricciones.",
+  housingScreening: "Filtro de vivienda", outsideStudy: "fuera del límite completo de estudio", hazardExcluded: "exclusión por amenaza mapeada", riparianExcluded: "retiro hídrico", occupiedExcluded: "suelo construido o huellas mapeadas", unknownCoverExcluded: "agua o cobertura desconocida", slopeExcluded: "supera la pendiente elegida", remoteExcluded: "a más de 800 m del tejido construido", treeExcluded: "árboles protegidos frente a vivienda", eligibleUnused: "Elegible bajo estos supuestos; no seleccionado por la demanda y prioridad actuales.", selectedHousing: "Zona de vivienda seleccionada bajo los supuestos actuales.",
   future: "Futuro", futureTitle: "Escenarios futuros", futureIntro: "Comparar crecimiento, vivienda y cobertura arbórea.",
   futureUnavailable: "No se cargaron los datos futuros. El mapa existente sigue disponible.",
   showFuture: "Mostrar escenario futuro", targetYear: "Año objetivo", compactGrowth: "Compacto", outwardGrowth: "Expansión", restorationGrowth: "Restauración",

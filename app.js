@@ -10,7 +10,7 @@ import {
 } from "./model.js";
 import { MapView, surfaceImages } from "./map-view.js";
 import { translator } from "./i18n.js";
-import { futureDefaults, policySettings, projectFuture, exportFuture, cellPosition, FUTURE_COLORS } from "./future-model.js";
+import { futureDefaults, policySettings, projectFuture, exportFuture, cellPosition, housingExclusions, FUTURE_COLORS } from "./future-model.js";
 
 const $ = (id) => document.getElementById(id);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -138,6 +138,9 @@ function refreshFuture() {
   $("future-badge").textContent=`${futureResult.year} · ${t("scenario")}`;
   $("future-enabled").checked=config.enabled;
   $("future-trees").checked=config.trees;
+  $("future-candidates").checked=config.candidates;
+  $("future-candidate-note").hidden=!config.candidates;
+  $("future-candidate-note").textContent=`${t("candidateLand")}: ${fmt(futureResult.eligibleAreaHa,1)} ha. ${t("inspectCandidates")}`;
   $("future-protect-trees").checked=config.protectTrees;
   $("future-year-value").textContent=futureResult.year;
   $("future-rate-value").textContent=`${fmt(config.rate,1)}%`;
@@ -183,7 +186,7 @@ function trendChart(points,year,target,label) {
 function setFutureParams(url) {
   if(!state.future)return;
   for(const [,key] of futureInputs)url.searchParams.set(`f-${key}`,String(state.future[key]));
-  for(const key of ["enabled","protectTrees","trees","mappedTreeTrend"])url.searchParams.set(`f-${key}`,state.future[key]?"1":"0");
+  for(const key of ["enabled","protectTrees","trees","mappedTreeTrend","candidates"])url.searchParams.set(`f-${key}`,state.future[key]?"1":"0");
   url.searchParams.set("f-model",state.future.model);
   url.searchParams.set("f-policy",state.future.policy);url.searchParams.set("f-seed",String(state.future.seed));
 }
@@ -194,7 +197,7 @@ for(const [id,key,min,max] of futureInputs)$(id).addEventListener("input",(e)=>{
   if(key==="treeRate")state.future.mappedTreeTrend=false;
   refresh();
 });
-for(const [id,key] of [["future-enabled","enabled"],["future-trees","trees"],["future-protect-trees","protectTrees"]])$(id).addEventListener("change",(e)=>{
+for(const [id,key] of [["future-enabled","enabled"],["future-trees","trees"],["future-candidates","candidates"],["future-protect-trees","protectTrees"]])$(id).addEventListener("change",(e)=>{
   if(!state.future)return;state.future[key]=e.target.checked;
   refresh();
 });
@@ -373,7 +376,7 @@ function renderLegend() {
   if(state.future?.enabled && futureResult) {
     for(const [key,label,visible] of [["housing","housingZones",futureResult.housing.length],
       ["trees","treeCover",state.future.trees],["loss","treeLoss",state.future.trees&&futureResult.loss.length],
-      ["gain","treeGain",state.future.trees&&futureResult.gain.length]])
+      ["gain","treeGain",state.future.trees&&futureResult.gain.length],["candidates","candidateLand",state.future.candidates]])
       if(visible)html+=`<span class="legend-item"><i style="--swatch:${FUTURE_COLORS[key]}"></i>${t(label)}</span>`;
   }
   $("legend").innerHTML = html;
@@ -412,9 +415,11 @@ function renderInspector() {
     $("inspect-content").innerHTML =
       `<div class="inspect-values"><div><small>${t("elevation")}</small><strong>${fmt(p.elevation)}<em>m</em></strong></div><div><small>${t("slope")}</small><strong>${fmt(p.slope, 1)}<em>°</em></strong></div></div><div class="inspect-hazards">${hazards}</div><div class="inspect-coords">EPSG:9377 · E ${fmt(p.easting, 1)} · N ${fmt(p.northing, 1)}</div>`;
     if(state.future?.enabled && futureResult) {
-      const col=Math.floor((p.x+model.width/2)/futureBaseline.cellWidth),row=Math.floor((model.depth/2-p.n)/futureBaseline.cellDepth),i=row*futureBaseline.width+col;
+      const col=Math.floor((p.x+model.width/2)/futureBaseline.cellWidth),row=Math.floor((model.depth/2-p.n)/futureBaseline.cellDepth),i=col>=0&&col<futureBaseline.width&&row>=0&&row<futureBaseline.height?row*futureBaseline.width+col:-1;
       const label=futureResult.housingSet.has(i)?"housingZones":futureResult.gainSet.has(i)?"treeGain":futureResult.lossSet.has(i)?"treeLoss":"baselineCell";
-      $("inspect-content").insertAdjacentHTML("beforeend",`<div class="inspect-coords">${t("scenarioAtPoint")} · ${futureResult.year}<br>${t(label)}</div>`);
+      const reasons=housingExclusions(futureBaseline,state.future,i);
+      const eligibility=reasons.length?`${t("housingScreening")}: ${reasons.map((r)=>t(r)).join("; ")}`:t(futureResult.housingSet.has(i)?"selectedHousing":"eligibleUnused");
+      $("inspect-content").insertAdjacentHTML("beforeend",`<div class="inspect-coords">${t("scenarioAtPoint")} · ${futureResult.year}<br>${t(label)}<br>${eligibility}</div>`);
     }
   } else if (s.kind === "measure") {
     if (state.measurePoints.length !== 2) return;
@@ -968,7 +973,7 @@ async function boot() {
       const value=params.get(`f-${key}`);
       if(value!==null && Number.isFinite(Number(value)))state.future[key]=clamp(Number(value),min,max);
     }
-    for(const key of ["enabled","protectTrees","trees","mappedTreeTrend"])if(params.has(`f-${key}`))state.future[key]=params.get(`f-${key}`)==="1";
+    for(const key of ["enabled","protectTrees","trees","mappedTreeTrend","candidates"])if(params.has(`f-${key}`))state.future[key]=params.get(`f-${key}`)==="1";
     if(["footprint","population"].includes(params.get("f-model")))state.future.model=params.get("f-model");
     if(params.has("f-seed"))state.future.seed=clamp(Number(params.get("f-seed"))||1,1,99);
     translate();
