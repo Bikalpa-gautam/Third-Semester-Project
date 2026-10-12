@@ -108,7 +108,7 @@ Consequently, the interface calls these scenarios, keeps alternatives selectable
 ## Reproduce and extend
 
 ```sh
-python -m pip install numpy pillow rasterio scipy pyproj shapely requests
+python -m pip install numpy pillow rasterio scipy pyproj shapely
 python scripts/prepare_future_data.py --cache-dir /path/to/public-data-cache
 python scripts/check_historical_change.py --cache-dir /path/to/public-data-cache
 npm run check

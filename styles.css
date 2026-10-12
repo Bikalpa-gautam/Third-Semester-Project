@@ -174,7 +174,7 @@ h1 {
 .future-chart { margin-top: 20px; }
 .future-chart small { font-size: 10px; }
 .future-chart svg { display: block; width: 100%; height: auto; }
-.future-chart text { font: 9px Arial, sans-serif; fill: #64736b; }
+.future-chart text { font: 9px Arial, sans-serif; fill: #64736b; stroke: none; }
 .future-badge { position: absolute; z-index: 3; left: 24px; top: 77px; padding: 8px 12px; background: #f8f9f6ed; color: #705627; border: 1px solid #dfd4be; border-radius: 6px; font-size: 11px; box-shadow: var(--shadow); }
 .future-method-text p { font-size: 13px; line-height: 1.75; color: var(--muted); }
 .research-links { display: flex; flex-direction: column; gap: 9px; margin-top: 22px; font-size: 12px; }

@@ -50,20 +50,25 @@ export class FutureView {
     const key=result.key+String(settings.trees);
     if(this.key===key)return;
     this.key=key;this.texture.image=futureImage(baseline,result,settings.trees);this.texture.needsUpdate=true;
+    const geometry=housingZoneGeometry(this.model,baseline,result);
+    this.blocks.geometry.dispose();this.blocks.geometry=geometry;
+  }
+}
+
+export function housingZoneGeometry(model, baseline, result) {
     const vertices=[];
     for(const i of result.housing) {
       const ring=cellRing(baseline,i,2);
       const shape=new THREE.Shape(ring.map((p)=>new THREE.Vector2(...p)));
       const g=new THREE.ExtrudeGeometry(shape,{depth:6,bevelEnabled:false,curveSegments:1});g.rotateX(-Math.PI/2);
       const a=g.attributes.position;
-      const roof=Math.max(...ring.map(([x,n])=>this.model.elevation(x,n)))-this.model.data.minimumElevation+7;
+      const roof=Math.max(...ring.map(([x,n])=>model.elevation(x,n)))-model.data.minimumElevation+7;
       for(let k=0;k<a.count;k++) {
-        const h=this.model.elevation(a.getX(k),-a.getZ(k))-this.model.data.minimumElevation;
+        const h=model.elevation(a.getX(k),-a.getZ(k))-model.data.minimumElevation;
         vertices.push(a.getX(k),a.getY(k)>3?roof:h+2,a.getZ(k));
       }
       g.dispose();
     }
     const geometry=new THREE.BufferGeometry();geometry.setAttribute("position",new THREE.Float32BufferAttribute(vertices,3));geometry.computeVertexNormals();
-    this.blocks.geometry.dispose();this.blocks.geometry=geometry;
-  }
+    return geometry;
 }

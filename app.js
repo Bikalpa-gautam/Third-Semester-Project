@@ -166,7 +166,7 @@ function refreshFuture() {
   const roofs=Object.entries(futureBaseline.footprintHistory).map(([year,p])=>({year:Number(year),value:p.roofHa}));
   const tree=Object.entries(futureBaseline.landcoverHistory).map(([year,p])=>({year:Number(year),value:p.treeHa}));
   const roofTarget=roofs.at(-1).value+futureResult.roofTrendHaPerYear*(futureResult.year-roofs.at(-1).year);
-  $("future-trends").innerHTML=trendChart(roofs,futureResult.year,roofTarget,t("roofArea"))+trendChart(tree,futureResult.year,futureResult.treeHa,t("treeCover"));
+  $("future-trends").innerHTML=trendChart(roofs,futureResult.year,roofTarget,t("roofArea"))+trendChart(tree,futureResult.year,futureResult.treeHa,t("mappedTreeCover"));
   const limits=[];
   if(futureResult.unallocated)limits.push(`${t("notAllocated")}: ${fmt(futureResult.unallocated)}`);
   if(futureResult.unmetTreeHa>.04)limits.push(`${t("treeGainNotAllocated")}: ${fmt(futureResult.unmetTreeHa,1)} ha`);
@@ -663,6 +663,8 @@ $("settlement-select").addEventListener("change", (e) => {
   url.searchParams.set("focus", state.boundaryFocus ? "1" : "0");
   url.searchParams.set("lang", lang);
   setFutureParams(url);
+  if(state.future && futureBaseline && Math.abs(state.future.rate-futureBaseline.population.annualRate)<0.001)
+    url.searchParams.delete("f-rate");
   location.assign(url.href);
 });
 for (const [id, key] of [

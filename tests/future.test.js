@@ -4,6 +4,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 import { futureDefaults, policySettings, projectFuture, exportFuture, cellRing, linearTrend } from "../future-model.js";
 import { createModel, pointInRing } from "../model.js";
+import { housingZoneGeometry } from "../future-view.js";
 import { buildingGeometry } from "../terrain-view.js";
 
 for(const site of ["el-uvito","la-palma"]) {
@@ -30,6 +31,10 @@ for(const site of ["el-uvito","la-palma"]) {
       const config={...futureDefaults(b),...policySettings(policy,b),year:2040,rehouse:100};
       const r=projectFuture(b,config);
       assert.equal(r.demand,r.accommodated+r.allocated+r.unallocated);
+      const mesh=housingZoneGeometry(createModel(data),b,r);
+      assert.equal(mesh.attributes.position.count>0,r.housing.length>0);
+      assert.ok([...mesh.attributes.position.array].every(Number.isFinite));
+      mesh.dispose();
       assert.equal(r.housing.length,new Set(r.housing).size);
       for(const i of r.housing){
         assert.equal(b.flags[i],0);assert.ok(b.slope[i]<=config.slope);assert.ok(b.distance[i]<=800);
