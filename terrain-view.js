@@ -2,6 +2,7 @@ import * as THREE from "./vendor/three.module.min.js";
 import { OrbitControls } from "./vendor/OrbitControls.js?v=2";
 import { LAYERS, PROPOSALS, densify, clamp } from "./model.js";
 import { BoundaryFocus } from "./boundary-focus.js";
+import { FutureView } from "./future-view.js";
 
 export function terrainGeometry(model) {
   const { data, width, depth } = model;
@@ -183,6 +184,7 @@ export class TerrainView {
       }),
     );
     this.world.add(this.terrain);
+    this.futureView=new FutureView(this.world,this.geometry,model);
     this.world.add(
       new THREE.Mesh(
         skirtGeometry(model),
@@ -514,6 +516,13 @@ export class TerrainView {
       ...this.controls.target.toArray(),
     ];
   }
+  focusArea(points) {
+    const xs=points.map((p)=>p.x),ns=points.map((p)=>p.n);
+    const west=Math.min(...xs),east=Math.max(...xs),south=Math.min(...ns),north=Math.max(...ns);
+    this.focus({x:(west+east)/2,n:(south+north)/2});
+    const span=Math.max(east-west,north-south)+150;
+    this.zoom(this.camera.position.distanceTo(this.controls.target)/(span*1.9));
+  }
   setView(v) {
     if (
       v?.length === 6 &&
@@ -577,6 +586,7 @@ export class TerrainView {
       1 - state.warmth * 0.0027,
     );
     this.world.scale.y = state.relief;
+    this.futureView.update(state.future,state.futureBaseline,state.futureResult);
     for (const [year, mesh] of Object.entries(this.buildings))
       mesh.visible = Number(year) === state.year && state.layers.buildings;
     for (const [key, group] of Object.entries(this.overlays)) {

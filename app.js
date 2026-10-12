@@ -10,6 +10,7 @@ import {
 } from "./model.js";
 import { MapView, surfaceImages } from "./map-view.js";
 import { translator } from "./i18n.js";
+import { futureDefaults, policySettings, projectFuture, exportFuture, cellPosition, FUTURE_COLORS } from "./future-model.js";
 
 const $ = (id) => document.getElementById(id);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -46,6 +47,14 @@ let t = translator(lang, siteName),
   ready = false,
   metresPerPixel = 4;
 let data = site === "el-uvito" ? window.EL_UVITO_DATA : null;
+let futureBaseline=null, futureResult=null, futureLoadFailed=false;
+const futureInputs=[
+  ["future-year","year",2025,2040],["future-rate","rate",-5,8],
+  ["future-household","household",1,8],["future-infill","infill",0,90],
+  ["future-land","land",80,500],["future-slope","slope",5,40],
+  ["future-tree-rate","treeRate",-10,10],["future-restoration","restoration",0,5],
+  ["future-rehouse","rehouse",0,500],
+];
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const state = {
   year: 2021,
@@ -57,6 +66,7 @@ const state = {
   relief: 1,
   orbit: false,
   boundaryFocus: params.get("focus") === "1",
+  future: null,
   reducedMotion,
   layers: {
     buildings: true,
@@ -75,7 +85,7 @@ const state = {
   panelOpen: true,
   mobilePanel: false,
 };
-if (["2010", "2019", "2021"].includes(params.get("year")))
+if (["2010", "2019", "2021", "2025"].includes(params.get("year")))
   state.year = Number(params.get("year"));
 if (["aerial", "elevation", "slope"].includes(params.get("base")))
   state.base = params.get("base");
@@ -116,6 +126,102 @@ function layerRows(keys) {
     )
     .join("");
 }
+function refreshFuture() {
+  $("future-unavailable").hidden=!futureLoadFailed;
+  $("future-controls").hidden=futureLoadFailed;
+  $("future-controls").inert=!futureBaseline;
+  $("future-badge").hidden=!state.future?.enabled;
+  if(!futureBaseline || !state.future)return;
+  const config=state.future;
+  const key=JSON.stringify(config);
+  if(futureResult?.key!==key)futureResult=projectFuture(futureBaseline,config);
+  $("future-badge").textContent=`${futureResult.year} · ${t("scenario")}`;
+  $("future-enabled").checked=config.enabled;
+  $("future-trees").checked=config.trees;
+  $("future-protect-trees").checked=config.protectTrees;
+  $("future-year-value").textContent=futureResult.year;
+  $("future-rate-value").textContent=`${fmt(config.rate,1)}%`;
+  $("future-population-source").textContent=t("sourceGrowth");
+  for(const [id,key] of futureInputs)if(document.activeElement!==$(id))$(id).value=config[key];
+  $$("[data-policy]").forEach((b)=>b.setAttribute("aria-pressed",b.dataset.policy===config.policy));
+  const approximate=(value)=>`≈ ${fmt(Math.round(value/10)*10)}`;
+  const metrics=[
+    ["baselinePopulation",approximate(futureBaseline.population["2025"])],
+    ["projectedPopulation",approximate(futureResult.population)],
+    [config.model==="footprint"?"additionalFootprints":"additionalDwellings",fmt(futureResult.demand)],
+    ["withinFabric",fmt(futureResult.accommodated)],
+    ["landNeeded",`${fmt(futureResult.landHa,2)} ha`],
+    ["futureTreeCover",`${fmt(futureResult.treeHa,1)} ha`],
+  ];
+  $("future-metrics").innerHTML=metrics.map(([label,value])=>`<div><small>${t(label)}</small><strong>${value}</strong></div>`).join("");
+  $("future-model").value=config.model;
+  $("future-household").disabled=config.model==="footprint";
+  $("future-rehouse").disabled=config.model==="footprint";
+  document.querySelector('label[for="future-land"] > span').textContent=t(config.model==="footprint"?"landPerEquivalent":"landPerDwelling");
+  $("future-trend-source").textContent=config.model==="footprint" ? `${t("footprintTrendSource")} ${fmt(futureResult.roofTrendHaPerYear,3)} ha/${t("perYear")}. ${t("footprintEquivalentMeaning")}` : "";
+  $("future-tree-rate").disabled=config.mappedTreeTrend;
+  $("future-forest-model").value=config.mappedTreeTrend?"trend":"policy";
+  $("future-tree-trend-note").hidden=!config.mappedTreeTrend;
+  $("future-tree-trend-note").textContent=`${t("linearTreeTrend")}: ${fmt(futureResult.treeTrendHaPerYear,3)} ha/${t("perYear")}.`;
+  const roofs=Object.entries(futureBaseline.footprintHistory).map(([year,p])=>({year:Number(year),value:p.roofHa}));
+  const tree=Object.entries(futureBaseline.landcoverHistory).map(([year,p])=>({year:Number(year),value:p.treeHa}));
+  const roofTarget=roofs.at(-1).value+futureResult.roofTrendHaPerYear*(futureResult.year-roofs.at(-1).year);
+  $("future-trends").innerHTML=trendChart(roofs,futureResult.year,roofTarget,t("roofArea"))+trendChart(tree,futureResult.year,futureResult.treeHa,t("treeCover"));
+  const limits=[];
+  if(futureResult.unallocated)limits.push(`${t("notAllocated")}: ${fmt(futureResult.unallocated)}`);
+  if(futureResult.unmetTreeHa>.04)limits.push(`${t("treeGainNotAllocated")}: ${fmt(futureResult.unmetTreeHa,1)} ha`);
+  $("future-shortfall").textContent=limits.join(" · ");$("future-shortfall").hidden=!limits.length;
+  $("future-zoom").disabled=!futureResult.housing.length;
+}
+function trendChart(points,year,target,label) {
+  const low=points[0].year,high=Math.max(year,points.at(-1).year+1),maximum=Math.max(target,...points.map((p)=>p.value))*1.2;
+  const x=(y)=>20+(y-low)/(high-low)*210,y=(v)=>90-v/Math.max(maximum,.01)*70;
+  const path=points.map((p,i)=>`${i?"L":"M"}${x(p.year).toFixed(1)},${y(p.value).toFixed(1)}`).join(" ");
+  const last=points.at(-1);
+  return `<div class="future-chart"><small>${label} · ha</small><svg viewBox="0 0 250 115" role="img" aria-label="${label} · ${low}–${year}"><path d="M20 90H230" stroke="#d7ded5" fill="none"/><path d="${path}" stroke="#64736b" stroke-width="1.6" fill="none"/><path d="M${x(last.year)},${y(last.value)} L${x(year)},${y(target)}" stroke="#b38a47" stroke-width="1.8" stroke-dasharray="4 3" fill="none"/>${points.map((p)=>`<circle cx="${x(p.year)}" cy="${y(p.value)}" r="2.5" fill="#64736b"/>`).join("")}<circle cx="${x(year)}" cy="${y(target)}" r="3" fill="#f8f9f6" stroke="#b38a47"/><text x="20" y="108">${low}</text><text x="${x(last.year)}" y="108" text-anchor="middle">${last.year}</text><text x="230" y="108" text-anchor="end">${year}</text><text x="230" y="17" text-anchor="end">${fmt(target,1)} ha</text></svg></div>`;
+}
+function setFutureParams(url) {
+  if(!state.future)return;
+  for(const [,key] of futureInputs)url.searchParams.set(`f-${key}`,String(state.future[key]));
+  for(const key of ["enabled","protectTrees","trees","mappedTreeTrend"])url.searchParams.set(`f-${key}`,state.future[key]?"1":"0");
+  url.searchParams.set("f-model",state.future.model);
+  url.searchParams.set("f-policy",state.future.policy);url.searchParams.set("f-seed",String(state.future.seed));
+}
+for(const [id,key,min,max] of futureInputs)$(id).addEventListener("input",(e)=>{
+  if(!state.future || e.target.value==="" || !Number.isFinite(Number(e.target.value)))return;
+  state.future[key]=clamp(Number(e.target.value),min,max);
+  if(["year","rehouse"].includes(key))state.future[key]=Math.round(state.future[key]);
+  if(key==="treeRate")state.future.mappedTreeTrend=false;
+  refresh();
+});
+for(const [id,key] of [["future-enabled","enabled"],["future-trees","trees"],["future-protect-trees","protectTrees"]])$(id).addEventListener("change",(e)=>{
+  if(!state.future)return;state.future[key]=e.target.checked;
+  refresh();
+});
+$("panel-future").addEventListener("click",(e)=>{
+  const button=e.target.closest("[data-policy]");
+  if(button && futureBaseline && state.future) {
+    Object.assign(state.future,policySettings(button.dataset.policy,futureBaseline));
+    state.future.mappedTreeTrend=false;
+    state.future.enabled=true;refresh();
+  }
+});
+$("future-alternative").addEventListener("click",()=>{if(state.future){state.future.seed=state.future.seed%99+1;refresh();}});
+$("future-forest-model").addEventListener("change",(e)=>{
+  if(!state.future)return;
+  state.future.mappedTreeTrend=e.target.value==="trend";
+  refresh();
+});
+$("future-model").addEventListener("change",(e)=>{if(state.future){state.future.model=e.target.value;refresh();}});
+$("future-export").addEventListener("click",()=>{
+  if(!futureResult || !state.future)return;
+  download(new Blob([JSON.stringify(exportFuture(futureResult,state.future,futureBaseline),null,2)],{type:"application/json"}),`${site}-${futureResult.year}-scenario.json`);
+});
+$("future-zoom").addEventListener("click",()=>{
+  if(!futureResult?.housing.length)return;
+  const points=futureResult.housing.map((i)=>cellPosition(futureBaseline,i));
+  currentView()?.focusArea(points);
+});
 function translate() {
   document.documentElement.lang = lang;
   t = translator(lang, siteName);
@@ -131,6 +237,7 @@ function translate() {
       : "Detecciones de edificaciones de Cuenca Alta y Cuenca Media, 2010, 2019 y 2021.";
     document.querySelector('[data-i18n="terrainSource"]').textContent = t("terrainSource").replace("9 m", `${fmt((data.extent[2] - data.extent[0]) / (data.width - 1), 1)} m`);
   }
+  if (futureBaseline) document.querySelector('[data-i18n="buildingSource"]').textContent=t("cadastreSource");
   $$("[data-title]").forEach((el) => {
     el.title = t(el.dataset.title);
     el.setAttribute("aria-label", t(el.dataset.title));
@@ -196,6 +303,8 @@ function refresh() {
     ),
   );
   $("year-caption").textContent = state.year;
+  document.querySelector('.year-caption [data-i18n="detected"]').textContent=t(state.year===2025?"cadastralPolygons":"detected");
+  refreshFuture();
   $("boundary-focus").checked = state.boundaryFocus;
   $("boundary-focus-row").hidden = !state.layers.boundary;
   $("building-count").textContent = data?.buildings[state.year]?.length ?? "";
@@ -244,7 +353,7 @@ function refresh() {
   renderPlan();
   renderLegend();
   renderInspector();
-  const snapshot = { ...state, layers: { ...state.layers } };
+  const snapshot = { ...state, layers: { ...state.layers }, futureBaseline, futureResult };
   mapView?.update(snapshot);
   terrainView?.update(snapshot);
 }
@@ -261,6 +370,12 @@ function renderLegend() {
   for (const key of ["massMovement", "flood", "torrential", "riparian"])
     if (state.layers[key])
       html += `<span class="legend-item"><i style="--swatch:${LAYERS[key].color}"></i>${t(key)}</span>`;
+  if(state.future?.enabled && futureResult) {
+    for(const [key,label,visible] of [["housing","housingZones",futureResult.housing.length],
+      ["trees","treeCover",state.future.trees],["loss","treeLoss",state.future.trees&&futureResult.loss.length],
+      ["gain","treeGain",state.future.trees&&futureResult.gain.length]])
+      if(visible)html+=`<span class="legend-item"><i style="--swatch:${FUTURE_COLORS[key]}"></i>${t(label)}</span>`;
+  }
   $("legend").innerHTML = html;
   $("legend").hidden = !html;
 }
@@ -296,6 +411,11 @@ function renderInspector() {
       : `<span>${t("noHazard")}</span>`;
     $("inspect-content").innerHTML =
       `<div class="inspect-values"><div><small>${t("elevation")}</small><strong>${fmt(p.elevation)}<em>m</em></strong></div><div><small>${t("slope")}</small><strong>${fmt(p.slope, 1)}<em>°</em></strong></div></div><div class="inspect-hazards">${hazards}</div><div class="inspect-coords">EPSG:9377 · E ${fmt(p.easting, 1)} · N ${fmt(p.northing, 1)}</div>`;
+    if(state.future?.enabled && futureResult) {
+      const col=Math.floor((p.x+model.width/2)/futureBaseline.cellWidth),row=Math.floor((model.depth/2-p.n)/futureBaseline.cellDepth),i=row*futureBaseline.width+col;
+      const label=futureResult.housingSet.has(i)?"housingZones":futureResult.gainSet.has(i)?"treeGain":futureResult.lossSet.has(i)?"treeLoss":"baselineCell";
+      $("inspect-content").insertAdjacentHTML("beforeend",`<div class="inspect-coords">${t("scenarioAtPoint")} · ${futureResult.year}<br>${t(label)}</div>`);
+    }
   } else if (s.kind === "measure") {
     if (state.measurePoints.length !== 2) return;
     const result = measurePoints(...state.measurePoints, model);
@@ -428,16 +548,20 @@ function setTab(tab, focus = false) {
     b.tabIndex = active ? 0 : -1;
     if (active && focus) b.focus();
   }
-  for (const name of ["explore", "scenarios", "plan"])
+  for (const name of ["explore", "scenarios", "future", "plan"])
     $(`panel-${name}`).hidden = name !== tab;
   if (tab !== "plan" && Object.hasOwn(PROPOSALS, state.tool)) {
     state.tool = null;
     refresh();
   }
+  if(tab==="future" && state.future && !state.future.enabled) {
+    state.future.enabled=true;
+    refresh();
+  }
 }
 function resize() {
   state.mobilePanel = mobilePanel();
-  const snapshot = { ...state, layers: { ...state.layers } };
+  const snapshot = { ...state, layers: { ...state.layers }, futureBaseline, futureResult };
   mapView?.update(snapshot);
   terrainView?.update(snapshot);
   mapView?.resize();
@@ -504,15 +628,15 @@ $("sidebar").addEventListener("click", (e) => {
 document.querySelector(".panel-tabs").addEventListener("keydown", (e) => {
   if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
   e.preventDefault();
-  const tabs = ["explore", "scenarios", "plan"],
+  const tabs = ["explore", "scenarios", "future", "plan"],
     i = tabs.indexOf(selectedTab);
   setTab(
     tabs[
       e.key === "Home"
         ? 0
         : e.key === "End"
-          ? 2
-          : (i + (e.key === "ArrowRight" ? 1 : 2)) % 3
+          ? 3
+          : (i + (e.key === "ArrowRight" ? 1 : 3)) % 4
     ],
     true,
   );
@@ -538,6 +662,7 @@ $("settlement-select").addEventListener("change", (e) => {
   url.searchParams.set("layers", Object.keys(state.layers).filter((k) => state.layers[k]).join(","));
   url.searchParams.set("focus", state.boundaryFocus ? "1" : "0");
   url.searchParams.set("lang", lang);
+  setFutureParams(url);
   location.assign(url.href);
 });
 for (const [id, key] of [
@@ -635,6 +760,7 @@ for (const [button, dialog] of [
   ["mobile-about", "about-dialog"],
   ["open-sources", "sources-dialog"],
   ["help", "help-dialog"],
+  ["future-methods", "future-dialog"],
 ])
   $(button).addEventListener("click", () => $(dialog).showModal());
 $("about-sources").addEventListener("click", () => {
@@ -701,6 +827,7 @@ $("share-view").addEventListener("click", async () => {
   );
   url.searchParams.set("lang", lang);
   url.searchParams.set("settlement", site);
+  setFutureParams(url);
   if (state.boundaryFocus) url.searchParams.set("focus", "1");
   const view = currentView()?.getView();
   if (view)
@@ -752,6 +879,7 @@ $("save-view").addEventListener("click", () => {
     ctx.font = "10px Arial";
     ctx.fillText(t("sourceCredit"), 20, h + 84);
     const details = [
+      state.future?.enabled?`${futureResult.year} · ${t("scenario")}`:"",
       state.mode === "3d" ? `${t("relief")}: ${state.relief}×` : "",
       state.rain || state.warmth ? t("scenarioCapture") : "",
       state.proposals.length ? t("annotationCapture") : "",
@@ -761,7 +889,7 @@ $("save-view").addEventListener("click", () => {
     ctx.fillText(details, 20, h + 104);
     output.toBlob((blob) => {
       if (blob) {
-        download(blob, `${site}-${state.year}-${state.base}.png`);
+        download(blob, state.future?.enabled?`${site}-${futureResult.year}-scenario.png`:`${site}-${state.year}-${state.base}.png`);
         toast(t("screenshotSaved"));
       } else toast(t("imageFail"));
     }, "image/png");
@@ -821,6 +949,31 @@ async function boot() {
       `<p>${t("dataFail")}</p><button class="secondary-button" id="retry-load">${t("retry")}</button>`;
     $("retry-load").onclick = () => location.reload();
     return;
+  }
+  try {
+    const response=await fetch(`assets/${site}-future.json`,{signal:AbortSignal.timeout(20000)});
+    if(!response.ok)throw new Error("Future baseline unavailable");
+    const baseline=await response.json(),n=baseline.width*baseline.height;
+    if(baseline.site!==site || baseline.crs!==data.crs || baseline.flags?.length!==n || baseline.treeFraction?.length!==n || !baseline.population?.["2025"])throw new Error("Invalid future baseline");
+    futureBaseline=baseline;
+    data.buildings["2025"]=baseline.buildings2025;
+    $("year-2025").hidden=false;
+    if(!params.has("year"))state.year=2025;
+    state.future=futureDefaults(baseline);
+    const requestedPolicy=params.get("f-policy");
+    if(["compact","expansion","restoration"].includes(requestedPolicy))Object.assign(state.future,policySettings(requestedPolicy,baseline));
+    for(const [,key,min,max] of futureInputs) {
+      const value=params.get(`f-${key}`);
+      if(value!==null && Number.isFinite(Number(value)))state.future[key]=clamp(Number(value),min,max);
+    }
+    for(const key of ["enabled","protectTrees","trees","mappedTreeTrend"])if(params.has(`f-${key}`))state.future[key]=params.get(`f-${key}`)==="1";
+    if(["footprint","population"].includes(params.get("f-model")))state.future.model=params.get("f-model");
+    if(params.has("f-seed"))state.future.seed=clamp(Number(params.get("f-seed"))||1,1,99);
+    translate();
+  } catch(error) {
+    futureLoadFailed=true;
+    if(state.year===2025)state.year=2021;
+    console.warn("Future baseline unavailable:",error);
   }
   model = createModel(data);
   try {
@@ -885,6 +1038,7 @@ async function boot() {
   if (requestedView) currentView()?.setView(requestedView);
   $("loading").hidden = true;
   refresh();
+  if(state.future?.enabled)setTab("future");
   resize();
   new ResizeObserver(resize).observe($("scene-wrap"));
   let last = 0,

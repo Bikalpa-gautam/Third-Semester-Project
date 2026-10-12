@@ -152,6 +152,32 @@ h1 {
 .boundary-focus > span:first-child {
   flex: 1;
 }
+.future-toggle > span:first-child { flex: 1; }
+.future-model-label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 15px; }
+.future-model-label select { display: block; width: 100%; margin-top: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 9px; border-radius: 6px; font: inherit; }
+.future-toggle { font-size: 12px; }
+.future-policies { margin-top: 18px; }
+.future-policies button { flex: 1; padding: 8px 3px; font-size: 11px; }
+.future-note { font-size: 11px; line-height: 1.65; color: var(--muted); margin: 14px 0; }
+.future-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 14px; padding: 22px 0; }
+.future-metrics small { display: block; font-size: 10px; line-height: 1.5; color: var(--muted); min-height: 30px; }
+.future-metrics strong { display: block; font-weight: 500; font-size: 21px; font-variant-numeric: tabular-nums; letter-spacing: -.4px; }
+.future-shortfall { font-size: 11px; line-height: 1.6; color: #885b26; border-left: 2px solid #cfaa72; padding-left: 10px; margin-bottom: 16px; }
+.future-assumptions summary { cursor: pointer; font-size: 12px; font-weight: 500; }
+.future-assumptions > label:not(.layer-row) { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 11px; margin-top: 15px; }
+.future-assumptions input[type="number"] { width: 66px; padding: 7px 5px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); color: var(--ink); font-size: 12px; }
+.future-actions { display: flex; gap: 8px; margin-top: 18px; }
+.future-actions button { flex: 1; font-size: 11px; padding: 9px 5px; }
+.future-zoom { margin-top: 10px; font-size: 11px; }
+.future-evidence { font-size: 11px; color: var(--muted); margin: 8px 0 20px; }
+.future-evidence summary { cursor: pointer; }
+.future-chart { margin-top: 20px; }
+.future-chart small { font-size: 10px; }
+.future-chart svg { display: block; width: 100%; height: auto; }
+.future-chart text { font: 9px Arial, sans-serif; fill: #64736b; }
+.future-badge { position: absolute; z-index: 3; left: 24px; top: 77px; padding: 8px 12px; background: #f8f9f6ed; color: #705627; border: 1px solid #dfd4be; border-radius: 6px; font-size: 11px; box-shadow: var(--shadow); }
+.future-method-text p { font-size: 13px; line-height: 1.75; color: var(--muted); }
+.research-links { display: flex; flex-direction: column; gap: 9px; margin-top: 22px; font-size: 12px; }
 .brand-divider {
   height: 21px;
   width: 1px;

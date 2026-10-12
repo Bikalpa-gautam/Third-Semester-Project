@@ -1,4 +1,5 @@
 import { LAYERS, PROPOSALS, RAMPS, sampleRamp, clamp } from "./model.js";
+import { futureImage } from "./future-view.js";
 
 export function surfaceImages(model, aerial) {
   const { data } = model;
@@ -211,6 +212,13 @@ export class MapView {
   getView() {
     return [this.center.x, this.center.n, this.scaleFactor];
   }
+  focusArea(points) {
+    const xs=points.map((p)=>p.x),ns=points.map((p)=>p.n);
+    const west=Math.min(...xs),east=Math.max(...xs),south=Math.min(...ns),north=Math.max(...ns);
+    this.center={x:(west+east)/2,n:(south+north)/2};
+    this.scaleFactor=clamp(Math.min((this.width-100)/(east-west+120),(this.availableHeight-120)/(north-south+120))/this.fitScale,1,16);
+    this.dirty=true;this.draw();
+  }
   setView(v) {
     if (v?.length === 3 && v.every(Number.isFinite)) {
       this.center = {
@@ -316,6 +324,16 @@ export class MapView {
         ctx.stroke();
       }
       ctx.setLineDash([]);
+    }
+    if (s.future?.enabled && s.futureBaseline && s.futureResult) {
+      const key=s.futureResult.key+String(s.future.trees);
+      if(this.futureKey!==key) {
+        this.futureKey=key;
+        this.futureRaster=futureImage(s.futureBaseline,s.futureResult,s.future.trees);
+      }
+      ctx.save();ctx.imageSmoothingEnabled=false;
+      ctx.drawImage(this.futureRaster,tl[0],tl[1],dw,dh);
+      ctx.restore();
     }
     if (s.rain) {
       ctx.save();

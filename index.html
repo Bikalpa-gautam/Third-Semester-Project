@@ -185,6 +185,7 @@
             <svg><use href="#i-sun" /></svg
             ><span data-i18n="scenarios">Scenarios</span>
           </button>
+          <button type="button" id="tab-future" role="tab" aria-selected="false" aria-controls="panel-future" tabindex="-1" data-tab="future"><span data-i18n="future">Future</span></button>
           <button
             type="button"
             id="tab-plan"
@@ -220,6 +221,7 @@
                 <button data-year="2010" aria-pressed="false">2010</button
                 ><button data-year="2019" aria-pressed="false">2019</button
                 ><button data-year="2021" aria-pressed="true">2021</button>
+                <button data-year="2025" aria-pressed="false" id="year-2025" hidden>2025</button>
               </div>
               <div class="year-caption">
                 <span data-i18n="detected">Detected polygons</span
@@ -330,6 +332,43 @@
             >
               Reset conditions
             </button>
+          </section>
+          <section role="tabpanel" id="panel-future" aria-labelledby="tab-future" hidden>
+            <div class="panel-heading"><h2 data-i18n="futureTitle">Future scenarios</h2><p data-i18n="futureIntro">Compare growth, housing and tree cover.</p></div>
+            <div id="future-unavailable" class="future-note" data-i18n="futureUnavailable" hidden>Future data could not load.</div>
+            <div id="future-controls">
+              <label class="future-model-label" for="future-model"><span data-i18n="projectionModel">Housing model</span><select id="future-model"><option value="footprint" data-i18n="footprintTrend">Footprint trend</option><option value="population" data-i18n="populationDemand">Population demand</option></select></label>
+              <label class="future-model-label" for="future-forest-model"><span data-i18n="forestModel">Tree-cover model</span><select id="future-forest-model"><option value="policy" data-i18n="policyScenario">Policy scenario</option><option value="trend" data-i18n="mappedLinearTrend">Mapped linear trend</option></select></label>
+              <p class="future-note" id="future-tree-trend-note" hidden></p>
+              <label class="layer-row future-toggle"><span data-i18n="showFuture">Show future scenario</span><input id="future-enabled" type="checkbox"><i class="switch-track" aria-hidden="true"></i></label>
+              <section class="settings-section">
+                <label class="range-label" for="future-year"><span data-i18n="targetYear">Target year</span><output id="future-year-value">2030</output></label>
+                <input id="future-year" type="range" min="2025" max="2040" step="1" value="2030">
+                <div class="future-policies segmented" role="group" aria-label="Growth approach"><button data-policy="compact" aria-pressed="true" data-i18n="compactGrowth">Compact</button><button data-policy="expansion" aria-pressed="false" data-i18n="outwardGrowth">Expansion</button><button data-policy="restoration" aria-pressed="false" data-i18n="restorationGrowth">Restoration</button></div>
+                <label class="range-label" for="future-rate"><span data-i18n="populationChange">Annual population change</span><output id="future-rate-value"></output></label>
+                <input id="future-rate" type="range" min="-5" max="8" step="0.1" value="1">
+                <p class="future-note" id="future-population-source"></p>
+              </section>
+              <div class="future-metrics" id="future-metrics" aria-live="polite"></div>
+              <div class="future-note" id="future-trend-source"></div>
+              <details class="future-evidence"><summary data-i18n="viewTrends">View mapped trends</summary><div id="future-trends"></div></details>
+              <div id="future-shortfall" class="future-shortfall" hidden></div>
+              <label class="layer-row future-toggle"><span data-i18n="showTreeCover">Show tree cover</span><input id="future-trees" type="checkbox" checked><i class="switch-track" aria-hidden="true"></i></label>
+              <details class="settings-section future-assumptions"><summary data-i18n="adjustAssumptions">Adjust assumptions</summary>
+                <label for="future-household"><span data-i18n="householdSize">People per dwelling</span><input id="future-household" type="number" min="1" max="8" step="0.5" value="3"></label>
+                <label for="future-infill"><span data-i18n="infillShare">Within existing fabric (%)</span><input id="future-infill" type="number" min="0" max="90" step="5" value="60"></label>
+                <label for="future-land"><span data-i18n="landPerDwelling">Land per dwelling (m²)</span><input id="future-land" type="number" min="80" max="500" step="20" value="160"></label>
+                <label for="future-slope"><span data-i18n="maximumSlope">Maximum slope (°)</span><input id="future-slope" type="number" min="5" max="40" step="5" value="25"></label>
+                <label for="future-tree-rate"><span data-i18n="annualTreeChange">Tree cover change (%/year)</span><input id="future-tree-rate" type="number" min="-10" max="10" step="0.1" value="0"></label>
+                <label for="future-restoration"><span data-i18n="restorationArea">Tree-cover gain target (ha/year)</span><input id="future-restoration" type="number" min="0" max="5" step="0.25" value="0"></label>
+                <label for="future-rehouse"><span data-i18n="rehousingDemand">Extra dwellings to rehouse</span><input id="future-rehouse" type="number" min="0" max="500" step="1" value="0"></label>
+                <label class="layer-row future-toggle"><span data-i18n="keepTrees">Protect trees from housing</span><input id="future-protect-trees" type="checkbox" checked><i class="switch-track" aria-hidden="true"></i></label>
+              </details>
+              <div class="future-actions"><button id="future-alternative" class="secondary-button" data-i18n="alternativePattern">Another pattern</button><button id="future-export" class="secondary-button" data-i18n="exportScenario">Export scenario</button></div>
+              <button id="future-zoom" class="secondary-button wide future-zoom" data-i18n="zoomHousing">Zoom to housing zones</button>
+              <p class="future-note" data-i18n="futureMeaning">Housing zones are scenario allocations. Population is estimated; the model does not predict individual moves.</p>
+              <button id="future-methods" class="text-button" data-i18n="futureMethods">Research & methods</button>
+            </div>
           </section>
           <section
             role="tabpanel"
@@ -534,6 +573,7 @@
             </button>
           </div>
         </div>
+        <div class="future-badge" id="future-badge" hidden></div>
         <div class="loading" id="loading" role="status">
           <div class="loading-contour"></div>
           <span data-i18n="loading">Opening El Uvito…</span>
@@ -696,6 +736,13 @@
         data-i18n="municipalSource"
         >Medellín image services ↗</a
       >
+    </dialog>
+    <dialog id="future-dialog">
+      <div class="dialog-top"><h2 data-i18n="methodsTitle">How growth is mapped</h2><button class="icon-button" data-close="future-dialog" data-title="close" aria-label="Close"><svg><use href="#i-close"/></svg></button></div>
+      <div class="future-method-text"><p data-i18n="methodsDemand"></p><p data-i18n="methodsAllocation"></p><p data-i18n="methodsTrees"></p><p data-i18n="methodsLimits"></p></div>
+      <dl class="source-list"><div><dt data-i18n="treeCover">Tree cover</dt><dd data-i18n="landcoverSource"></dd></div><div><dt data-i18n="projectedPopulation">Population</dt><dd data-i18n="populationSource"></dd></div><div><dt data-i18n="footprints">Buildings</dt><dd data-i18n="cadastreSource"></dd></div></dl>
+      <div class="research-links"><a href="https://doi.org/10.1080/00045608.2012.707591" target="_blank" rel="noopener noreferrer">Meentemeyer et al. (2013), FUTURES</a><a href="https://doi.org/10.1016/j.compenvurbsys.2020.101569" target="_blank" rel="noopener noreferrer">Liang et al. (2021), PLUS</a><a href="https://doi.org/10.1007/s00168-007-0138-2" target="_blank" rel="noopener noreferrer">Pontius et al. (2008), model validation</a></div>
+      <a class="source-link" href="https://github.com/Bikalpa-gautam/Third-Semester-Project/blob/main/docs/future-scenarios.md" target="_blank" rel="noopener noreferrer" data-i18n="fullResearch">Read the research and validation notes</a>
     </dialog>
     <dialog id="help-dialog">
       <div class="dialog-top">

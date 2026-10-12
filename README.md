@@ -14,7 +14,7 @@ Live site: https://eluvito.netlify.app/
 
 - Choose **El Uvito** or **La Palma** from the settlement menu beside the title. Each opens its own terrain, aerial image and clipped evidence layers.
 - Aerial, elevation and slope views, with an orbiting 3D terrain model and a north-up 2D map.
-- Detected building footprints for 2010, 2019 and 2021.
+- Detected building footprints for 2010, 2019 and 2021, alongside approximate 2025 cadastral outlines.
 - Independent controls for the settlement boundary, streams, riparian buffers, mapped hazards and 50 m contours.
 - Under **Settlement boundary**, enable **Blur outside boundary** to keep the settlement sharp while softening its surroundings. This works in 3D and Map view, follows the camera and is included in captures and shared view links.
 - Click a terrain point to inspect elevation, slope, projected coordinates and historical hazard categories.
@@ -23,6 +23,12 @@ Live site: https://eluvito.netlify.app/
 - English and Spanish interfaces, keyboard navigation and a compact layout for small screens.
 
 If WebGL 2 is unavailable, the site opens the functional 2D map. It does not leave the visitor on a loading screen.
+
+## Future scenarios
+
+Open **Future** for projections from 2025 to 2040 in either settlement. Choose **Footprint trend** to extend the original 2010/2019/2021 roof-area series, or **Population demand** to estimate additional dwellings from a population scenario. The tree-cover selector offers a policy scenario or the mapped 2021/2023/2025 linear trend. Compare **Compact**, **Expansion** and **Restoration**, adjust the year and assumptions, or zoom to the amber housing zones. Trends, tree changes and demand totals update together in 3D and Map view. Scenario parameters and projected zone rings can be exported.
+
+Recent inputs include Medellín's 2025 construction map, Esri/Impact Observatory's 2025 land cover and WorldPop's 2025/2030 modelled population totals. Historical footprint equivalents are area units, not household counts. Spatial selection excludes mapped constraints and current occupation but does not establish legal or engineering suitability. Full source details, equations, limitations, research links and reproduction commands are in [Future scenarios](docs/future-scenarios.md).
 
 ## Proposals
 
@@ -99,6 +105,9 @@ The tests cover grid orientation, interpolation, slope, contours, horizontal dis
 | `terrain-view.js`                  | Three.js terrain, solid terrain sides, draped overlays and proposal pins  |
 | `boundary-focus.js`                | Camera-following settlement mask and outside-boundary blur in 3D          |
 | `map-view.js`                      | Canvas 2D map, surface rasters, pan/zoom and fallback rendering           |
+| `future-model.js`, `future-view.js` | Trend/demand models, constrained allocation and future overlays |
+| `scripts/prepare_future_data.py` | Preparation of public 2025 baselines and historical land cover |
+| `docs/future-scenarios.md` | Equations, source attribution, research and validation |
 | `i18n.js`                          | English and Spanish interface messages                                    |
 | `assets/`                          | Processed datasets and orthophotos for both settlements, plus favicon     |
 | `vendor/`                          | Local Three.js and OrbitControls, with their upstream license             |

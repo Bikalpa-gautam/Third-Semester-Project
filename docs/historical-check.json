@@ -1,0 +1,52 @@
+[
+  {
+    "site": "el-uvito",
+    "reference": "2023\u20132025 classified land-cover change",
+    "training": "2021\u20132023",
+    "predictedNewCells": 363,
+    "referenceNewCells": 64,
+    "hits": 29,
+    "falseAlarms": 334,
+    "misses": 35,
+    "figureOfMerit": 0.0729,
+    "precision": 0.0799,
+    "recall": 0.4531,
+    "builtCells2021_2023_2025": [
+      1421,
+      1784,
+      1742
+    ],
+    "treeCells2021_2023_2025": [
+      1744,
+      1149,
+      1273
+    ],
+    "treeAreaExtrapolationErrorPercent": -40.5,
+    "interpretation": "Map-agreement diagnostic only. Classifier errors and census uncertainty are not quantified."
+  },
+  {
+    "site": "la-palma",
+    "reference": "2023\u20132025 classified land-cover change",
+    "training": "2021\u20132023",
+    "predictedNewCells": 585,
+    "referenceNewCells": 179,
+    "hits": 79,
+    "falseAlarms": 506,
+    "misses": 100,
+    "figureOfMerit": 0.1153,
+    "precision": 0.135,
+    "recall": 0.4413,
+    "builtCells2021_2023_2025": [
+      2542,
+      3127,
+      3182
+    ],
+    "treeCells2021_2023_2025": [
+      13785,
+      13005,
+      13237
+    ],
+    "treeAreaExtrapolationErrorPercent": -7.3,
+    "interpretation": "Map-agreement diagnostic only. Classifier errors and census uncertainty are not quantified."
+  }
+]
