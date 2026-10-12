@@ -77,6 +77,13 @@ for(const site of ["el-uvito","la-palma"]) {
       assert.deepEqual(housingExclusions(b,c,b.flags.length),["outsideStudy"]);
     }
   });
+  test(`${site}: expansion clearing does not silently trigger restoration`,()=>{
+    const c={...futureDefaults(b),...policySettings("expansion",b),year:2040},r=projectFuture(b,c);
+    const expectedLoss=r.housing.reduce((sum,i)=>sum+b.treeFraction[i]*b.cellWidth*b.cellDepth/10000,0);
+    assert.equal(r.gain.length,0);
+    assert.ok(Math.abs(r.treeHa-(r.baselineTreeHa-expectedLoss))<1e-8);
+    assert.ok(Math.abs(r.treeLossHa-expectedLoss)<1e-8);
+  });
 }
 test("linear trend recovers an independent straight line and housing trend uses the original roof history",()=>{
   const trend=linearTrend([{year:2010,value:5},{year:2019,value:23},{year:2021,value:27}]);

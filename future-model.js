@@ -100,7 +100,7 @@ export function projectFuture(b, input) {
   const housingTreeLoss = housing.reduce((sum,i) => sum + b.treeFraction[i] * cellArea / 10000, 0);
   const treeTrend=linearTrend(Object.entries(b.landcoverHistory).map(([year,p])=>({year:Number(year),value:p.treeHa})));
   const targetTreeHa = Math.max(0,input.mappedTreeTrend ? baselineTreeHa+treeTrend.slope*years
-    : baselineTreeHa * (1 + clamp(Number(input.treeRate)||0, -10, 10)/100) ** years)
+    : baselineTreeHa * (1 + clamp(Number(input.treeRate)||0, -10, 10)/100) ** years-housingTreeLoss)
     + clamp(Number(input.restoration)||0, 0, 5) * years;
   let remaining = Math.max(0, baselineTreeHa - housingTreeLoss);
   const afterHousing=remaining;
@@ -118,7 +118,8 @@ export function projectFuture(b, input) {
       loss.push(i); remaining = Math.max(0, remaining-removed);
     }
   }
-  if (targetTreeHa > afterHousing) {
+  if (targetTreeHa > afterHousing && (Number(input.restoration)>0 ||
+    (input.mappedTreeTrend ? treeTrend.slope>0 : Number(input.treeRate)>0))) {
     const candidates = b.classes.map((c,i) => ({i,c,score: (b.flags[i]&4 ? 1 : 0) + Math.exp(-b.distance[i]/800) + noise(i,53)/5}))
       .filter(({i,c}) => (b.flags[i] & (1|8|16))===0 && [5,11].includes(c) && b.treeFraction[i]<0.1 && !housingSet.has(i));
     candidates.sort((a,b) => b.score-a.score || a.i-b.i);
